@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UI Analyzer &mdash; Developer Guide</title>
+<style>
+.skip-link{position:absolute;top:-100%;left:1rem;padding:.5rem 1rem;background:#0071e3;color:#fff;border-radius:0 0 6px 6px;font-size:.9rem;font-weight:600;text-decoration:none;z-index:9999}
+.skip-link:focus{top:0}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:1rem;line-height:1.7;color:#1d1d1f;background:#f5f5f7}
+.wrapper{max-width:900px;margin:0 auto;padding:2rem 1.5rem 4rem}
+header{background:#1d1d1f;color:#f5f5f7;padding:2rem 1.5rem}
+header .inner{max-width:900px;margin:0 auto}
+header h1{font-size:2rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.25rem}
+header p.subtitle{color:#afafaf;font-size:1rem}
+nav{background:#fff;border-bottom:1px solid #d2d2d7;position:sticky;top:0;z-index:100}
+nav .inner{max-width:900px;margin:0 auto;padding:0 1.5rem;display:flex;flex-wrap:wrap;gap:.25rem}
+nav a{display:inline-block;padding:.65rem .75rem;color:#0071e3;text-decoration:none;font-size:.875rem;border-bottom:2px solid transparent}
+nav a:hover{border-bottom-color:#0071e3}
+nav a:focus{outline:3px solid #0071e3;outline-offset:-1px;border-radius:4px}
+.card{background:#fff;border-radius:12px;padding:1.75rem 2rem;margin-bottom:1.5rem;border:1px solid #d2d2d7}
+h2{font-size:1.4rem;font-weight:700;margin-bottom:1rem;color:#1d1d1f;letter-spacing:-.01em}
+h3{font-size:1.1rem;font-weight:600;margin:1.25rem 0 .5rem;color:#1d1d1f}
+h4{font-size:1rem;font-weight:600;margin:1rem 0 .4rem;color:#3a3a3c}
+p{margin-bottom:.9rem}
+p:last-child{margin-bottom:0}
+ul,ol{padding-left:1.5rem;margin-bottom:.9rem}
+li{margin-bottom:.35rem}
+pre{background:#1c1c1e;color:#f5f5f7;border-radius:8px;padding:1.1rem 1.25rem;overflow-x:auto;margin-bottom:.9rem;font-size:.875rem;line-height:1.6}
+code{font-family:"SF Mono","Fira Code",Menlo,monospace;font-size:.875em;background:#f0f0f5;padding:.1em .35em;border-radius:4px;color:#1d1d1f}
+pre code{background:transparent;padding:0;color:inherit;font-size:1em}
+kbd{display:inline-block;padding:.15em .4em;font-size:.8em;font-family:"SF Mono",Menlo,monospace;border:1px solid #c6c6c8;border-radius:4px;background:#f2f2f7;color:#1d1d1f;white-space:nowrap;line-height:1.4}
+.table-wrapper{overflow-x:auto;margin-bottom:.9rem}
+table{width:100%;border-collapse:collapse;font-size:.9375rem}
+caption{text-align:left;font-weight:600;font-size:.9rem;color:#3a3a3c;padding:0 0 .5rem}
+th{background:#f2f2f7;font-weight:600;text-align:left;padding:.6rem .9rem;border:1px solid #d2d2d7;white-space:nowrap}
+td{padding:.6rem .9rem;border:1px solid #d2d2d7;vertical-align:top}
+tr:nth-child(even) td{background:#fafafa}
+.note{background:#e8f0fe;border-left:4px solid #0071e3;padding:.9rem 1.1rem;border-radius:0 8px 8px 0;margin-bottom:.9rem;font-size:.9375rem}
+.warning{background:#fff3e0;border-left:4px solid #ff9500;padding:.9rem 1.1rem;border-radius:0 8px 8px 0;margin-bottom:.9rem;font-size:.9375rem}
+a:focus,button:focus{outline:3px solid #0071e3;outline-offset:2px;border-radius:3px}
+@media(prefers-color-scheme:dark){
+  body{color:#f5f5f7;background:#000}
+  header{background:#161617}
+  header p.subtitle{color:#8e8e93}
+  nav{background:#1c1c1e;border-bottom-color:#38383a}
+  nav a{color:#2997ff}
+  nav a:hover{border-bottom-color:#2997ff}
+  nav a:focus{outline-color:#2997ff}
+  .card{background:#1c1c1e;border-color:#38383a}
+  h2,h3,h4{color:#f5f5f7}
+  code{background:#2c2c2e;color:#f5f5f7}
+  kbd{background:#2c2c2e;border-color:#48484a;color:#f5f5f7}
+  th{background:#2c2c2e;border-color:#38383a}
+  td{border-color:#38383a}
+  tr:nth-child(even) td{background:#232325}
+  caption{color:#ebebf5}
+  .note{background:#0a2a4a;border-left-color:#2997ff}
+  .warning{background:#2a1800;border-left-color:#ff9500}
+  a:focus,button:focus{outline-color:#2997ff}
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+<header>
+  <div class="inner">
+    <h1>UI Analyzer</h1>
+    <p class="subtitle">Developer Guide &mdash; Architecture, APIs, and implementation details</p>
+  </div>
+</header>
+<nav aria-label="Page sections">
+  <div class="inner">
+    <a href="#introduction">Introduction</a>
+    <a href="#features">Features</a>
+    <a href="#tech-stack">Tech stack</a>
+    <a href="#ollama">Ollama integration</a>
+    <a href="#file-structure">File structure</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#threading">Threading model</a>
+    <a href="#image-analysis">Image analysis</a>
+    <a href="#drag-drop">Drag and drop</a>
+    <a href="#prompt-routing">Prompt routing</a>
+    <a href="#accessibility">Accessibility</a>
+    <a href="#shortcuts">Shortcuts</a>
+    <a href="#gotchas">Known gotchas</a>
+    <a href="#build">Run instructions</a>
+  </div>
+</nav>
+<div class="wrapper">
+<main id="main-content">
+
+<section class="card" id="introduction" aria-labelledby="h-intro">
+  <h2 id="h-intro">Introduction</h2>
+  <p>UI Analyzer is a cross-platform wxPython app built for <strong>Becky</strong>, a blind developer who needs to understand what her UI looks like to sighted users. It uses a local AI model served by <a href="https://ollama.com">Ollama</a> to describe UI source files &mdash; no cloud, no internet for analysis, no data leaves the machine.</p>
+  <p>The core loop: open a project folder &rarr; select a UI file or drop an image &rarr; get a structured written description of its visual appearance, usability, professional quality, and accessibility. Ask follow-up questions in a persistent conversation per file. Build a project-wide context and ask cross-screen questions.</p>
+  <p>This guide covers everything a developer new to the project needs to contribute without breaking existing behavior.</p>
+</section>
+
+<section class="card" id="features" aria-labelledby="h-features">
+  <h2 id="h-features">Feature overview</h2>
+  <ul>
+    <li><strong>File analysis</strong> &mdash; Analyze Swift, SwiftUI, Storyboard, XIB, HTML, CSS, React/JSX, Vue, Svelte, Python, JavaScript, TypeScript, and Markdown files from a project folder.</li>
+    <li><strong>Image / screenshot analysis</strong> &mdash; PNG, JPG, HEIC, WebP, TIFF, BMP, GIF files up to 10 MB. Uses Tesseract OCR + Pillow for text extraction, then Ollama for description.</li>
+    <li><strong>Design spec analysis</strong> &mdash; Markdown files are automatically recognized as design specs and get a color/typography/component-focused output.</li>
+    <li><strong>Output modes</strong> &mdash; Prose (5-section Markdown), Markdown table, or fully accessible HTML5 table rendered in an AccessibleWebView (NVDA / JAWS / Narrator / VoiceOver compatible).</li>
+    <li><strong>Follow-up questions</strong> &mdash; Persistent conversation per file with rolling context window.</li>
+    <li><strong>Project context</strong> &mdash; Summarizes all files so cross-screen questions work.</li>
+    <li><strong>Drag and drop</strong> &mdash; Drop folders anywhere in the sidebar from File Explorer or Finder.</li>
+    <li><strong>Model picker</strong> &mdash; Lists all installed Ollama models with capability descriptions and "recommended for current file type" markers.</li>
+    <li><strong>Custom app icon</strong> &mdash; Bundled <code>assets/app_icon.png</code> shown in the window title bar and Windows taskbar at runtime.</li>
+    <li><strong>WCAG 2.2 AA accessible</strong> &mdash; Every interactive control has an accessible name, every button is at least 44&times;44, every dialog is keyboard-operable, and every screen reader can read every screen.</li>
+  </ul>
+</section>
+
+<section class="card" id="tech-stack" aria-labelledby="h-tech">
+  <h2 id="h-tech">Tech stack</h2>
+  <div class="table-wrapper">
+    <table>
+      <caption>Technology decisions and their rationale</caption>
+      <thead>
+        <tr>
+          <th scope="col">Layer</th>
+          <th scope="col">Technology</th>
+          <th scope="col">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Platform</td><td>Windows 10/11, macOS 14+</td><td>Linux works for dev but is untested</td></tr>
+        <tr><td>GUI toolkit</td><td>wxPython 4.2+</td><td>Cross-platform; native widgets on every OS</td></tr>
+        <tr><td>HTML rendering</td><td>wx.html2.WebView + <code>wx_accessible_webview</code></td><td>Edge WebView2 on Windows, WebKit on macOS; accessible ARIA live regions</td></tr>
+        <tr><td>AI backend</td><td>Ollama (local HTTP)</td><td>Any pulled model works; selection is per-file-type-recommended</td></tr>
+        <tr><td>HTTP client</td><td>httpx</td><td>Streaming-friendly async client for Ollama chat API</td></tr>
+        <tr><td>Image / OCR</td><td>Pillow + pytesseract</td><td>Dimension detection + Tesseract OCR; Tesseract binary must be on PATH</td></tr>
+        <tr><td>Markdown rendering</td><td>markdown package</td><td>Only used when the model returns Markdown and the user chose Table &gt; Markdown</td></tr>
+        <tr><td>Threading</td><td><code>threading.Thread</code> + <code>wx.CallAfter</code></td><td>All long-running work off the main thread; all UI updates posted back via <code>CallAfter</code></td></tr>
+        <tr><td>Config files</td><td>flat <code>requirements.txt</code></td><td>No pyproject.toml; pip-install everything in one shot</td></tr>
+        <tr><td>App icon</td><td><code>assets/app_icon.png</code> (1254&times;1254)</td><td>Set via <code>wx.Icon</code> on app and frame; works on Windows title bar + taskbar</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card" id="ollama" aria-labelledby="h-ollama">
+  <h2 id="h-ollama">Ollama integration</h2>
+  <p>UI Analyzer talks to Ollama over its local HTTP API at <code>http://localhost:11434</code>. The integration is in <code>ui_analyzer/services/ollama_client.py</code>.</p>
+  <h3>Endpoints used</h3>
+  <ul>
+    <li><code>GET /api/tags</code> &mdash; list installed models. Returns <code>name</code>, <code>size</code>, <code>details.parameter_size</code>, <code>details.family</code>.</li>
+    <li><code>POST /api/chat</code> &mdash; streaming chat. Body has <code>model</code>, <code>messages</code> array, <code>stream: true</code>. The response is NDJSON; each line has <code>message.content</code> (a chunk of text), <code>done: false</code> while streaming, then <code>done: true</code> with stats on the final line.</li>
+  </ul>
+  <h3>Streaming pattern</h3>
+  <pre role="region" aria-label="Ollama streaming example"><code>async with client.stream("POST", "/api/chat", json=payload) as resp:
+    async for line in resp.aiter_lines():
+        chunk = json.loads(line)
+        if chunk.get("done"):
+            break
+        on_chunk(chunk["message"]["content"])</code></pre>
+  <p>All UI updates from inside the streaming loop must be wrapped in <code>wx.CallAfter</code> because the stream runs on a background thread. <code>OllamaClient</code> exposes a synchronous wrapper (<code>chat_stream(...)</code>) that runs the async loop in a worker thread and calls <code>on_chunk</code> from there.</p>
+  <h3>Model recommendation</h3>
+  <p><code>best_model_for_filetype(models, file_type)</code> returns the best model for a given file type using a simple heuristic map (e.g. <code>qwen2.5-coder:*</code> for code, <code>llava:*</code> for images). The result is shown as <strong>(recommended)</strong> in the picker &mdash; the user can still pick anything they want.</p>
+</section>
+
+<section class="card" id="file-structure" aria-labelledby="h-files">
+  <h2 id="h-files">File structure</h2>
+  <pre role="region" aria-label="Project file structure"><code>UI-Analyzer/
+  main.py                              Entry point; sets app icon; constructs MainFrame
+  requirements.txt                     wxPython, wx-accessible-webview, httpx, pillow, pytesseract, markdown
+  assets/
+    app_icon.png                       1254&times;1254 PNG; set on wx.App and MainFrame
+  ui_analyzer/
+    __init__.py
+    models/
+      __init__.py
+      ui_file.py                       UIFile, UIFileType enum, UIAnalysis, OutputMode, TableFormat
+    services/
+      __init__.py
+      ui_analyzer.py                   UIAnalyzer class; session management; all prompt templates
+      ollama_client.py                 OllamaClient; streaming chat; model listing; best-model heuristic
+      file_scanner.py                  scan_folder(path) -&gt; list[UIFile]
+      contrast_advisor.py              extractHexColors, contrastRatio, adjustedColor, contrastReport
+    views/
+      __init__.py
+      main_frame.py                    Top-level frame; menus; accelerators; status bar; all the wiring
+      detail_panel.py                  Toolbar; output mode/format pickers; 5 state panels; follow-up bar
+      sidebar.py                       File list (wx.ListCtrl); folder drop target; "Open Folder" button
+      model_picker.py                  Choose-AI-Model dialog; lists installed models; refresh button
+  docs/
+    user-guide.html                    Plain-language user guide
+    developer-guide.html               This document
+  .gitattributes                       * text=auto eol=lf
+  .gitignore                           __pycache__/, *.pyc, .DS_Store, venv/, etc.
+  CLAUDE.md                            Project-level Claude instructions
+  README.md                            Quick start, shortcuts, known limitations</code></pre>
+</section>
+
+<section class="card" id="architecture" aria-labelledby="h-arch">
+  <h2 id="h-arch">Architecture and key design decisions</h2>
+
+  <h3>Three-layer structure</h3>
+  <p>The app splits cleanly into models, services, and views:</p>
+  <ul>
+    <li><strong>models</strong> &mdash; plain dataclasses / enums. <code>UIFile</code> holds a scanned file's metadata and analysis state. <code>UIAnalysis</code> holds the model's response (text or HTML). <code>UIFileType</code> enumerates every supported file type with an <code>is_image</code> flag and an <code>extensions</code> tuple.</li>
+    <li><strong>services</strong> &mdash; pure business logic with no wx imports. <code>UIAnalyzer</code> builds prompts, manages per-file sessions, and exposes a streaming <code>analyze(...)</code> method. <code>OllamaClient</code> handles all HTTP. <code>file_scanner</code> walks a folder. <code>contrast_advisor</code> computes WCAG ratios.</li>
+    <li><strong>views</strong> &mdash; the wx widgets only. <code>MainFrame</code> holds the splitter, menus, and status bar. <code>DetailPanel</code> and <code>SidebarPanel</code> are children of the splitter. <code>ModelPickerDialog</code> is a modal dialog.</li>
+  </ul>
+  <p>This split lets the services be unit-tested without wx, and lets the views be redesigned without touching the analysis logic.</p>
+
+  <h3>Per-file conversation sessions</h3>
+  <p>When a follow-up question is asked on a file, <code>UIAnalyzer</code> looks up (or creates) a <code>FileSession</code> keyed by the file's UUID. The session holds the rolling message history: system prompt, prior user/assistant turns, and the new question. Streaming tokens are appended to the running text in <code>DetailPanel.stream_chunk</code>.</p>
+
+  <h3>Rolling context window</h3>
+  <p>When the running message history exceeds 12 000 characters, <code>roll_context(file_id)</code> is called before the next follow-up. It asks the model for a 4&ndash;6 sentence summary, creates a fresh session with the system prompt plus the summary as the new system block, and re-anchors with the first 2 000 characters of the original file source.</p>
+
+  <h3>Project context</h3>
+  <p><code>build_project_context(files, on_progress)</code> runs a lightweight mini-session for each file, generating a 2&ndash;3 sentence summary. All summaries are concatenated and stored in <code>self.project_context</code>. Every call to <code>_make_session()</code> appends this block to the system instructions, giving the model cross-file awareness. Project Q&amp;A uses a separate <code>_make_project_system_prompt</code> that emits HTML fragment output with <code>&lt;h2&gt;Question&lt;/h2&gt; / &lt;h2&gt;Answer&lt;/h2&gt;</code> structure for screen-reader heading navigation.</p>
+
+  <h3>HTML table rendering</h3>
+  <p>When the user picks <strong>Table &gt; HTML</strong>, the model is asked to return a self-contained HTML fragment starting with a <code>&lt;details class="tldr" open&gt;</code> TL;DR block, followed by a <code>&lt;table&gt;</code> with <code>&lt;thead&gt;</code>, <code>&lt;tbody&gt;</code>, and <code>&lt;th scope&gt;</code>. <code>_extract_html(raw)</code> strips any Markdown code fences the model may have wrapped around it, then <code>DetailPanel._display_analysis</code> hands the result to <code>AccessibleWebView.set_content(html)</code> (or the plain <code>wx.html2.WebView.SetPage</code> fallback).</p>
+  <p>The TL;DR <code>&lt;details open&gt;</code> element is the first thing in the output. Screen readers announce it as a collapsible region with the TL;DR text inside, so a blind user gets the headline before diving into the table.</p>
+</section>
+
+<section class="card" id="threading" aria-labelledby="h-threading">
+  <h2 id="h-threading">Threading model</h2>
+  <p>wxPython is single-threaded &mdash; all UI work must happen on the main thread. Long-running operations (folder scan, Ollama HTTP request, image OCR) run on background <code>threading.Thread</code> workers and post results back via <code>wx.CallAfter</code>.</p>
+  <p>The pattern is the same everywhere:</p>
+  <pre role="region" aria-label="Threading pattern"><code>def _start_analyze(self, file, mode, fmt):
+    self._status.SetStatusText(f"Analyzing {file.name}&hellip;")
+    def do_analysis():
+        try:
+            analysis = self._analyzer.analyze(file, mode, fmt, on_chunk)
+            wx.CallAfter(self._on_analysis_done, file, analysis)
+        except Exception as exc:
+            wx.CallAfter(self._on_analysis_error, file, str(exc))
+    threading.Thread(target=do_analysis, daemon=True).start()</code></pre>
+  <p>The <code>on_chunk</code> callback inside <code>do_analysis</code> is called from the worker thread, so <code>UIAnalyzer.analyze</code> wraps it: every chunk path inside the analyzer calls <code>wx.CallAfter(self._detail.stream_chunk, text)</code> before touching the wx widget. This is the only safe way to update a wx control from a background thread.</p>
+  <div class="warning">Never call <code>self._status.SetStatusText(...)</code>, <code>self._list.SetItem(...)</code>, or any other wx method directly from inside <code>do_analysis</code> &mdash; it works on a lucky run, then crashes randomly. Always go through <code>wx.CallAfter</code>.</div>
+</section>
+
+<section class="card" id="image-analysis" aria-labelledby="h-img">
+  <h2 id="h-img">Image analysis</h2>
+  <p>Supported formats: PNG, JPG, JPEG, HEIC, HEIF, WebP, TIFF, TIF, BMP, GIF. Maximum size: 10 MB (enforced in <code>file_scanner</code>).</p>
+  <p>When <code>file.file_type.is_image</code> is true, <code>UIAnalyzer.analyze</code> calls <code>_extract_image_content(path)</code> before building the prompt:</p>
+  <ol>
+    <li><strong>Dimensions and device type</strong> &mdash; Pillow opens the image and reports <code>width</code> &times; <code>height</code>. The aspect ratio is compared to common device screen ratios to produce a heuristic device label (e.g., "iPhone portrait 393&times;852 pt").</li>
+    <li><strong>OCR</strong> &mdash; <code>pytesseract.image_to_data</code> processes the image. Each word's bounding box is mapped to a position label: one of <code>top/upper/middle/lower/bottom</code> &times; <code>left/center/right</code>. Capped at 60 observations to keep the prompt small.</li>
+    <li><strong>Prompt</strong> &mdash; The header and OCR text are passed to <code>_image_prompt</code>, which asks the model to describe the screen visually using that structured text.</li>
+  </ol>
+  <p>Ollama does not receive image pixel data directly &mdash; only structured text. Text-heavy screens work very well. Icon-heavy screens with no labels are harder; the model works from position information alone.</p>
+  <div class="note">If Tesseract is not installed, <code>pytesseract</code> raises a clear error at runtime. The scanner still picks up image files; the user just gets an error when they try to analyze one. The error pane in <code>DetailPanel</code> shows the missing-binary message.</div>
+</section>
+
+<section class="card" id="drag-drop" aria-labelledby="h-drag">
+  <h2 id="h-drag">Drag and drop</h2>
+  <p>One drop target is registered, on the sidebar:</p>
+  <ul>
+    <li><strong>SidebarPanel</strong> &mdash; <code>wx.FileDropTarget</code> subclass <code>FolderDropTarget</code>. Accepts any dropped folder and calls <code>on_drop_folder</code> with the <code>Path</code>. Wired up in <code>MainFrame</code> to call <code>_load_folder</code>, which kicks off a background scan.</li>
+  </ul>
+  <p>The drop target only accepts directories (not individual files) because the rest of the app is folder-centric &mdash; dropping a single file would have no natural place to go.</p>
+</section>
+
+<section class="card" id="prompt-routing" aria-labelledby="h-prompts">
+  <h2 id="h-prompts">Prompt routing</h2>
+  <p><code>UIAnalyzer.analyze(file, mode, fmt, on_chunk)</code> routes to one of five prompt templates based on file type, file name, and user-selected mode. The routing is checked in this order:</p>
+  <div class="table-wrapper">
+    <table>
+      <caption>Prompt routing decisions &mdash; checked top to bottom</caption>
+      <thead>
+        <tr>
+          <th scope="col">Priority</th>
+          <th scope="col">Condition</th>
+          <th scope="col">Prompt template</th>
+          <th scope="col">Output</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><code>file.file_type.is_image</code></td>
+          <td><code>_image_prompt</code></td>
+          <td>Visual Appearance, Layout, Text Content, Design Quality, Accessibility</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>file type is Markdown AND not README/CHANGELOG/etc.</td>
+          <td><code>_design_spec_prompt</code></td>
+          <td>Color System, Typography, Spacing &amp; Layout, Components &amp; Patterns, Accessibility Design Decisions</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>mode == TABLE, format == HTML</td>
+          <td><code>_html_table_prompt</code></td>
+          <td>TL;DR <code>&lt;details&gt;</code> block + accessible HTML5 <code>&lt;table&gt;</code></td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>mode == TABLE, format == MARKDOWN</td>
+          <td><code>_markdown_table_prompt</code></td>
+          <td>Summary paragraph + Markdown table</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td>Any other type, mode == PROSE</td>
+          <td><code>_prose_prompt</code></td>
+          <td>Visual Appearance, Ease of Use, Professional Quality, Accessibility, Other Details</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Each prompt template is a Python function returning a multi-line string. They are designed to be edited in one place; if you change a section, change it consistently across all five.</p>
+</section>
+
+<section class="card" id="accessibility" aria-labelledby="h-a11y">
+  <h2 id="h-a11y">Accessibility implementation</h2>
+  <p>The app is built WCAG 2.2 AA accessible end to end. The implementation targets NVDA, JAWS, Narrator, and VoiceOver simultaneously. The patterns below are the ones that matter.</p>
+
+  <h3>SetName + SetToolTip on every interactive control</h3>
+  <p>wx exposes a widget's accessible name through the <code>SetName(...)</code> method. Screen readers (NVDA, JAWS, Narrator, VoiceOver) announce this name when the widget receives focus. <code>SetToolTip(...)</code> provides a longer description on hover/focus.</p>
+  <p>Every <code>wx.Button</code>, <code>wx.TextCtrl</code>, <code>wx.Choice</code>, <code>wx.ListCtrl</code>, and modal dialog in the app has both. The label-only <code>StaticText</code> next to a field acts as the visible label; <code>SetName</code> on the control makes the screen reader announce the same thing.</p>
+
+  <h3>44 &times; 44 minimum touch / click target</h3>
+  <p>WCAG 2.5.5 requires interactive targets to be at least 44 &times; 44 CSS pixels. Every button in the app uses <code>size=(W, 44)</code> (or taller) to meet this. The toolbar's "Open Folder" button, the model picker's "Refresh model list" button, and all the detail-panel action buttons (Copy, Save, Analyze, Ask) are 44 px tall.</p>
+
+  <h3>Paired label + control</h3>
+  <p>The follow-up question text field has a <code>StaticText("Follow-up:")</code> next to it, and the <code>TextCtrl</code> is given <code>SetName("Follow-up question")</code>. Screen readers announce "Follow-up question, edit, blank" when focus enters the field.</p>
+
+  <h3>Show / hide via state, not via Enable / Disable when possible</h3>
+  <p>The detail panel's five state panels (empty / ready / loading / result / error) are stacked in the same sizer; <code>_show_state(name)</code> calls <code>Show(name == state)</code> on each. The follow-up bar and the copy/save buttons are also shown or hidden rather than enabled / disabled when the state changes, because hiding removes the control from the tab order and screen-reader cursor more predictably than the disabled state.</p>
+  <p>The exception is the <strong>Table format</strong> dropdown: it is <code>Disable()</code>-d (not hidden) when the user picks Prose mode. Hiding it would silently remove a control the screen reader already enumerated, which is more disorienting than disabling.</p>
+
+  <h3>Focus management after analysis</h3>
+  <p>When an analysis finishes, <code>MainFrame._on_analysis_done</code> calls <code>self._detail._result_view.SetFocus()</code>. This moves focus to the WebView showing the analysis, so the user's screen reader immediately begins reading the result. Without this, focus would stay on the Analyze button and the user would have to <kbd>Tab</kbd> through several controls to reach the output.</p>
+
+  <h3>Live region status updates</h3>
+  <p>The status bar at the bottom of the window is the app's live region. Every state transition (scan started, analysis started, analysis complete, error) calls <code>self._status.SetStatusText(...)</code>. The status bar fires UIA / IAccessible2 events that NVDA, JAWS, Narrator, and VoiceOver all monitor &mdash; they announce the new text automatically.</p>
+
+  <h3>Accessible WebView for analysis output</h3>
+  <p>The <code>wx_accessible_webview</code> library (an <code>AccessibleWebView</code> wrapper around <code>wx.html2.WebView</code>) exposes the rendered HTML through IAccessible2 / UIA so screen readers can navigate headings, tables, and form controls inside the WebView. The fallback is the plain <code>wx.html2.WebView</code> (still readable, just less rich in the AT tree).</p>
+  <p>The HTML analysis output uses:</p>
+  <ul>
+    <li><code>&lt;h2&gt;Question&lt;/h2&gt; / &lt;h2&gt;Answer&lt;/h2&gt;</code> for project Q&amp;A &mdash; lets the screen reader's heading rotor jump between Q&amp;A pairs.</li>
+    <li><code>&lt;details class="tldr" open&gt;</code> for the HTML table TL;DR &mdash; announced as a collapsible region with the summary text.</li>
+    <li><code>&lt;table&gt;</code> with <code>&lt;thead&gt;</code>, <code>&lt;tbody&gt;</code>, <code>&lt;th scope="col"&gt;</code> &mdash; lets the user navigate cell by cell with the screen reader's table commands.</li>
+  </ul>
+
+  <h3>Color contrast in the chrome</h3>
+  <p>The default wx theme meets WCAG AA on Windows (System theme) and macOS. The "Open Folder" button, the toolbar labels, and the status bar text all use the system foreground / background colors, so they inherit the high-contrast settings when the user enables High Contrast Mode in Windows or Increase Contrast in macOS.</p>
+
+  <h3>Custom app icon</h3>
+  <p>The bundled <code>assets/app_icon.png</code> is set on the <code>wx.App</code> via <code>app.SetIcon(...)</code> and on the <code>MainFrame</code> via <code>frame.SetIcon(...)</code> in <code>main.py</code>. On Windows, this shows the icon in the window title bar, the Alt-Tab switcher, and the taskbar. On macOS, the title bar only (the Dock icon is set by the .app bundle's Info.plist, which doesn't exist in <code>python main.py</code> dev runs).</p>
+</section>
+
+<section class="card" id="shortcuts" aria-labelledby="h-shortcuts">
+  <h2 id="h-shortcuts">Keyboard shortcuts</h2>
+  <p>All shortcuts are defined in <code>MainFrame._build_accelerators</code> as <code>wx.AcceleratorEntry</code> records. They work regardless of which child control has focus, so they are available from inside the follow-up text field, the WebView, and the model picker dialog.</p>
+  <div class="table-wrapper">
+    <table>
+      <caption>Keyboard shortcuts &mdash; cross-platform</caption>
+      <thead>
+        <tr>
+          <th scope="col">Action</th>
+          <th scope="col">Shortcut (Windows / Linux)</th>
+          <th scope="col">Shortcut (macOS)</th>
+          <th scope="col">Menu</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Open Folder</td><td><kbd>Ctrl O</kbd></td><td><kbd>Cmd O</kbd></td><td>File</td></tr>
+        <tr><td>Choose AI Model</td><td><kbd>Ctrl M</kbd></td><td><kbd>Cmd M</kbd></td><td>File</td></tr>
+        <tr><td>Quit</td><td><kbd>Ctrl Q</kbd></td><td><kbd>Cmd Q</kbd></td><td>File</td></tr>
+        <tr><td>Analyze / Re-analyze</td><td><kbd>Ctrl R</kbd></td><td><kbd>Cmd R</kbd></td><td>Analysis</td></tr>
+        <tr><td>Build Project Context</td><td><kbd>Ctrl Shift A</kbd></td><td><kbd>Cmd Shift A</kbd></td><td>Analysis</td></tr>
+        <tr><td>Ask Project Question</td><td><kbd>Ctrl Shift I</kbd></td><td><kbd>Cmd Shift I</kbd></td><td>Analysis</td></tr>
+        <tr><td>Copy Output</td><td><kbd>Ctrl Shift C</kbd></td><td><kbd>Cmd Shift C</kbd></td><td>Edit</td></tr>
+        <tr><td>Save Output</td><td><kbd>Ctrl S</kbd></td><td><kbd>Cmd S</kbd></td><td>Edit</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card" id="gotchas" aria-labelledby="h-gotchas">
+  <h2 id="h-gotchas">Known gotchas</h2>
+  <ul>
+    <li><strong>wx is single-threaded:</strong> every <code>SetStatusText</code>, <code>SetItem</code>, <code>SetLabel</code>, and <code>SetFocus</code> call from a worker thread must be wrapped in <code>wx.CallAfter</code>. Forgetting this works on a lucky run, then crashes randomly inside <code>stream_chunk</code>.</li>
+    <li><strong>Ollama wraps HTML in Markdown fences:</strong> even with explicit "do not use Markdown" instructions, the model sometimes wraps the HTML output in <code>```html ... ```</code>. <code>_extract_html(raw)</code> finds the first <code>&lt;!DOCTYPE</code> or <code>&lt;html</code> substring and strips everything before it, then strips a trailing <code>```</code> if present. Call it on every HTML response.</li>
+    <li><strong>HTML mode requires a complete document before render:</strong> the <code>AccessibleWebView</code> parses the whole HTML at once. During streaming, <code>DetailPanel</code> uses a plain <code>wx.TextCtrl</code> for the streaming output and switches to the WebView only when the response is complete.</li>
+    <li><strong>FileDialog wildcard for HTML saves:</strong> on Windows, the <code>HTML files (*.html)|*.html</code> wildcard requires the full <code>*.html</code> pattern, not just <code>*.html</code>. Getting this wrong silently saves the file with no extension on some Windows builds.</li>
+    <li><strong>SetName (not SetLabel) drives screen reader name:</strong> <code>SetLabel</code> changes the visible text. <code>SetName</code> changes the accessible name. NVDA / JAWS / Narrator / VoiceOver all use the accessible name. If you only set the label, the screen reader announces the type ("button") with no name.</li>
+    <li><strong>44 px button height:</strong> the default <code>wx.Button</code> is too short to meet WCAG 2.5.5. Always pass <code>size=(W, 44)</code> or use a wrapper <code>Panel</code> with <code>SetMinSize((-1, 44))</code>.</li>
+    <li><strong>Ollama not running:</strong> <code>GET /api/tags</code> returns a connection error. The startup flow in <code>MainFrame._auto_select_model</code> catches this and shows a <code>wx.MessageBox</code> with a clear "how to start" message. The window still opens so the user can read the message with their screen reader.</li>
+    <li><strong>Tesseract not on PATH:</strong> <code>pytesseract.image_to_string</code> raises <code>TesseractNotFoundError</code>. The image analysis path catches this and shows a clear error in the detail panel.</li>
+    <li><strong>Refresh model list after pulling:</strong> the model picker caches its list at construction time. After <code>ollama pull</code>, the user must click the <strong>Refresh model list</strong> button to see the new model.</li>
+    <li><strong>AccessibleWebView import is optional:</strong> if <code>wx_accessible_webview</code> is not installed, <code>DetailPanel</code> falls back to <code>wx.html2.WebView</code> silently. The fallback works but exposes less of the rendered HTML to screen readers. To get the full a11y experience on Windows, install <code>pip install wx-accessible-webview</code>.</li>
+  </ul>
+</section>
+
+<section class="card" id="build" aria-labelledby="h-build">
+  <h2 id="h-build">Run instructions</h2>
+  <h3>First time setup</h3>
+  <pre role="region" aria-label="First-time run"><code>cd "path/to/UI-Analyzer"
+python3 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+python main.py</code></pre>
+
+  <h3>Verify Ollama is running</h3>
+  <pre role="region" aria-label="Ollama check"><code>ollama list                            # should print at least one model
+ollama pull qwen2.5-coder:7b           # if empty
+ollama serve                           # if not running</code></pre>
+
+  <h3>Verify the app icon loads</h3>
+  <pre role="region" aria-label="Icon verification"><code>python3 -c "import wx; app=wx.App(); from pathlib import Path; \
+  print(wx.Image(str(Path('assets/app_icon.png')), wx.BITMAP_TYPE_PNG).IsOk())"</code></pre>
+  <p>Should print <code>True</code>. If it prints <code>False</code>, the PNG is corrupt or missing.</p>
+
+  <h3>Verify the package imports</h3>
+  <pre role="region" aria-label="Import verification"><code>python3 -c "from ui_analyzer.services.ui_analyzer import UIAnalyzer; \
+  from ui_analyzer.views.main_frame import MainFrame; print('OK')"</code></pre>
+  <p>Should print <code>OK</code>. If it raises <code>ImportError</code>, run <code>pip install -r requirements.txt</code> from inside the activated venv.</p>
+
+  <h3>Headless smoke test (CI / server)</h3>
+  <pre role="region" aria-label="Headless smoke test"><code>python3 -c "import wx; app=wx.App(); \
+  from ui_analyzer.views.main_frame import MainFrame; \
+  f = MainFrame(); f.Show(); print('Window constructed')"</code></pre>
+  <p>Constructs the window without entering the main loop. Useful in CI to catch widget-construction errors.</p>
+
+  <h3>Build a Windows .exe (optional)</h3>
+  <pre role="region" aria-label="PyInstaller build"><code>pip install pyinstaller
+pyinstaller --onefile --windowed \
+  --add-data "assets;assets" \
+  --name "UI Analyzer" \
+  main.py</code></pre>
+  <p>The resulting <code>dist/UI Analyzer.exe</code> includes the icon. PyInstaller will use the .png icon for the window title bar; for a real .exe file icon (shown in File Explorer), generate an <code>.ico</code> from the PNG and pass <code>--icon=app_icon.ico</code>.</p>
+</section>
+
+</main>
+</div>
+</body>
+</html>
