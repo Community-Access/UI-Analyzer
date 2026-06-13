@@ -75,6 +75,9 @@ class SettingsDialog(wx.Dialog):
             choices=[labels[p] for p in providers]
         )
         self._provider_choice.SetName("AI Provider")
+        self._provider_choice.SetToolTip(
+            "Choose whether to use a local Ollama model or a cloud API provider"
+        )
 
         # Set current value
         current_provider = self._config.get("provider", "ollama")
@@ -105,6 +108,7 @@ class SettingsDialog(wx.Dialog):
         # Test Connection
         self._test_btn = wx.Button(panel, label="Test Connection")
         self._test_btn.SetName("Test Ollama Connection")
+        self._test_btn.SetToolTip("Check that Ollama is reachable at the URL above")
         self._test_btn.Bind(wx.EVT_BUTTON, self._on_test_ollama)
         sizer.Add(self._test_btn, 0, wx.LEFT | wx.BOTTOM, 12)
 
@@ -140,6 +144,8 @@ class SettingsDialog(wx.Dialog):
         sizer.Add(self._anthropic_key, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 12)
 
         anth_btn = wx.Button(panel, label="Save Anthropic Key")
+        anth_btn.SetName("Save Anthropic API key")
+        anth_btn.SetToolTip("Securely store your Anthropic API key in the system keychain")
         anth_btn.Bind(wx.EVT_BUTTON, lambda _e: self._save_key("anthropic", self._anthropic_key.GetValue()))
         sizer.Add(anth_btn, 0, wx.LEFT | wx.BOTTOM, 12)
 
@@ -153,6 +159,8 @@ class SettingsDialog(wx.Dialog):
         sizer.Add(self._openai_key, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 12)
 
         open_btn = wx.Button(panel, label="Save OpenAI Key")
+        open_btn.SetName("Save OpenAI API key")
+        open_btn.SetToolTip("Securely store your OpenAI API key in the system keychain")
         open_btn.Bind(wx.EVT_BUTTON, lambda _e: self._save_key("openai", self._openai_key.GetValue()))
         sizer.Add(open_btn, 0, wx.LEFT | wx.BOTTOM, 12)
 

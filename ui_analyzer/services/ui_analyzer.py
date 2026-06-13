@@ -6,7 +6,13 @@ import re
 from pathlib import Path
 from typing import Callable, Generator, Optional
 
-from ui_analyzer.models.ui_file import UIFile, UIFileType, UIAnalysis, OutputMode, TableFormat
+import base64
+import json
+
+from ui_analyzer.models.ui_file import (
+    UIFile, UIFileType, UIAnalysis, OutputMode, TableFormat,
+    VisionMode, ValidationResult, ValidationClaim, ValidationRetraction,
+)
 from ui_analyzer.services.ai_client import AIClient
 from ui_analyzer.services.contrast_advisor import contrast_report
 
@@ -385,6 +391,14 @@ class UIAnalyzer:
         else:
             content = file.path.read_text(encoding="utf-8", errors="ignore")
 
+        # Load attached screenshot if present
+        screenshot_data: Optional[bytes] = None
+        if file.screenshot_abs_path and file.screenshot_abs_path.is_file():
+            try:
+                screenshot_data = file.screenshot_abs_path.read_bytes()
+            except OSError:
+                pass
+
         return self._run_analysis(
             file_id=file.id,
             file_name=file.name,
@@ -393,7 +407,83 @@ class UIAnalyzer:
             mode=mode,
             table_format=table_format,
             on_chunk=on_chunk,
+            screenshot_data=screenshot_data,
         )
+
+    def validate_against_screenshot(
+        self,
+        file: UIFile,
+        prior_analysis: UIAnalysis,
+    ) -> ValidationResult:
+        """Send the prior analysis + attached screenshot to the model.
+
+        Returns a `ValidationResult` with three lists:
+        - stands_by  — claims the model still believes after seeing the image
+        - retracts   — claims the model wants to take back
+        - additions  — new claims grounded in the screenshot
+        """
+        screenshot_abs = file.screenshot_abs_path
+        if screenshot_abs is None or not screenshot_abs.is_file():
+            raise RuntimeError(
+                "No screenshot is attached to this file. "
+                "Right-click the file in the sidebar to attach one."
+            )
+
+        png_data = screenshot_abs.read_bytes()
+        prompt = _build_validation_prompt(prior_analysis.content, prior_analysis.is_html)
+
+        # Try multimodal first; fall back to OCR text if rejected
+        raw_response = self._run_validation(prompt, png_data)
+        return _parse_validation_json(raw_response)
+
+    def _run_validation(self, prompt: str, png_data: bytes) -> str:
+        """Send validation prompt with image to the model."""
+        b64 = base64.b64encode(png_data).decode()
+
+        # Build a multimodal user message (Ollama / OpenAI vision format)
+        # For text-only models the image part is silently ignored or causes a
+        # 400; in that case we fall back to OCR text injection below.
+        try:
+            messages: list[dict] = [
+                {"role": "system", "content": _VALIDATION_SYSTEM_PROMPT},
+                {"role": "user",   "content": prompt, "images": [b64]},
+            ]
+            accumulated = ""
+            for chunk in self._client.stream_chat(self.model, messages):
+                accumulated += chunk
+            if accumulated.strip():
+                return accumulated
+        except Exception:
+            pass
+
+        # OCR fallback for text-only backends
+        ocr_text = ""
+        if _HAS_OCR:
+            import tempfile, os
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                tmp.write(png_data)
+                tmp_path = tmp.name
+            try:
+                from pathlib import Path as _P
+                ocr_text = _extract_image_content(_P(tmp_path))
+            finally:
+                os.unlink(tmp_path)
+
+        augmented = (
+            prompt
+            + "\n\nOCR transcription of the attached screenshot "
+            + "(text-only, layout approximate):\n---\n"
+            + ocr_text
+            + "\n---\n"
+        )
+        messages = [
+            {"role": "system", "content": _VALIDATION_SYSTEM_PROMPT},
+            {"role": "user",   "content": augmented},
+        ]
+        accumulated = ""
+        for chunk in self._client.stream_chat(self.model, messages):
+            accumulated += chunk
+        return accumulated
 
     def _run_analysis(
         self,
@@ -404,6 +494,7 @@ class UIAnalyzer:
         mode: OutputMode,
         table_format: TableFormat,
         on_chunk: Callable[[str], None],
+        screenshot_data: Optional[bytes] = None,
     ) -> UIAnalysis:
         is_html = mode == OutputMode.TABLE and table_format == TableFormat.HTML
 
@@ -424,7 +515,19 @@ class UIAnalyzer:
         self._sessions[file_id] = session
 
         prompt = self._build_prompt(file_name, file_type, content, mode, table_format)
-        session.add_user(prompt)
+
+        # Attach screenshot to the user turn when present
+        vision_mode = VisionMode.NOT_ATTACHED
+        if screenshot_data:
+            b64 = base64.b64encode(screenshot_data).decode()
+            session.messages.append({
+                "role": "user",
+                "content": prompt + "\n\nA screenshot of this UI is attached for visual reference.",
+                "images": [b64],
+            })
+            vision_mode = VisionMode.MULTIMODAL
+        else:
+            session.add_user(prompt)
 
         accumulated = ""
         for chunk in self._client.stream_chat(self.model, session.messages):
@@ -444,6 +547,7 @@ class UIAnalyzer:
             mode=mode,
             table_format=table_format if mode == OutputMode.TABLE else None,
             is_html=is_html,
+            vision_mode=vision_mode,
         )
 
     # ── Follow-up ─────────────────────────────────────────────────────────────
@@ -821,6 +925,81 @@ navigable stops.
   • If you are listing issues by screen, use <ul><li>Screen name: issue</li></ul> \
 so each item is a separate navigation stop.
 """
+
+
+_VALIDATION_SYSTEM_PROMPT = """\
+You are a UI accessibility and visual design expert.
+You have been shown:
+1. An existing text-based analysis of a UI file
+2. A real screenshot of that UI
+
+Your job is to verify that analysis against what you can actually see in the screenshot, \
+and return a JSON object with three keys:
+
+{
+  "stands_by":  ["claim still true", ...],
+  "retracts":   ["claim that was wrong or misleading", ...],
+  "additions":  ["new observation only visible in the screenshot", ...]
+}
+
+Rules:
+- "stands_by"  — copy claims from the analysis that the screenshot confirms
+- "retracts"   — copy (and briefly explain) any claim the screenshot contradicts
+- "additions"  — add new observations about color, layout, imagery, or contrast \
+that could not be inferred from code alone
+- Return ONLY the JSON object, no markdown fences, no explanation text.
+"""
+
+
+def _build_validation_prompt(prior_analysis: str, is_html: bool) -> str:
+    text = prior_analysis
+    if is_html:
+        # Strip tags for a clean text summary the model can compare against
+        text = re.sub(r"<[^>]+>", " ", text)
+        text = re.sub(r"\s{2,}", " ", text).strip()
+
+    return (
+        "Here is the existing analysis of a UI file:\n\n"
+        f"---\n{text[:6_000]}\n---\n\n"
+        "Now compare it against the screenshot provided. "
+        "Return JSON with stands_by, retracts, and additions."
+    )
+
+
+def _parse_validation_json(raw: str) -> ValidationResult:
+    """Parse the model's JSON response into a ValidationResult.
+
+    Tolerates code-fenced responses and missing/extra keys.
+    """
+    text = raw.strip()
+    # Strip ```json ... ``` or ``` ... ``` fences
+    text = re.sub(r"^```[a-z]*\n?", "", text)
+    text = re.sub(r"\n?```$", "", text).strip()
+
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        # Try to salvage a partial object by extracting the first { ... }
+        m = re.search(r"\{.*\}", text, re.DOTALL)
+        if m:
+            try:
+                data = json.loads(m.group())
+            except json.JSONDecodeError:
+                data = {}
+        else:
+            data = {}
+
+    def _claims(key: str) -> list:
+        items = data.get(key, [])
+        if not isinstance(items, list):
+            return []
+        return [str(i) for i in items if i]
+
+    return ValidationResult(
+        stands_by=[ValidationClaim(t) for t in _claims("stands_by")],
+        retracts=[ValidationRetraction(t) for t in _claims("retracts")],
+        additions=[ValidationClaim(t) for t in _claims("additions")],
+    )
 
 
 def _extract_html(raw: str) -> str:

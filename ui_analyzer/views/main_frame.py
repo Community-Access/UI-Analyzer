@@ -10,6 +10,7 @@ import wx
 
 from ui_analyzer.models.ui_file import UIFile, OutputMode, TableFormat
 from ui_analyzer.services.file_scanner import scan_folder
+from ui_analyzer.services.ai_client import AIClient
 from ui_analyzer.services.config_manager import ConfigManager
 from ui_analyzer.services.ollama_client import OllamaClient
 from ui_analyzer.services.anthropic_client import AnthropicClient
@@ -33,7 +34,8 @@ _ID_ASK_PROJECT   = wx.NewIdRef()
 _ID_COPY          = wx.NewIdRef()
 _ID_SAVE          = wx.NewIdRef()
 _ID_MODEL_PICKER  = wx.NewIdRef()
-_ID_SETTINGS       = wx.NewIdRef()
+_ID_SETTINGS      = wx.NewIdRef()
+_ID_VALIDATE      = wx.NewIdRef()
 
 
 class MainFrame(wx.Frame):
@@ -87,6 +89,7 @@ class MainFrame(wx.Frame):
             on_select=self._on_file_selected,
             on_open_folder=self._open_folder_dialog,
             on_drop_folder=self._load_folder,
+            on_attachment_changed=self._on_attachment_changed,
         )
 
         self._detail = DetailPanel(
@@ -96,6 +99,8 @@ class MainFrame(wx.Frame):
             on_save=self._save_output,
             on_follow_up=self._send_follow_up,
             status_bar=self._status,
+            on_validate=self._start_validate,
+            on_detach=self._on_detail_detach,
         )
 
         self._splitter.SplitVertically(self._sidebar, self._detail, _SIDEBAR_W)
@@ -121,6 +126,9 @@ class MainFrame(wx.Frame):
         an_menu.Append(_ID_ANALYZE, "Analyze / Re-analyze\tCtrl+R",
                         "Run AI analysis on the selected file")
         an_menu.AppendSeparator()
+        an_menu.Append(_ID_VALIDATE, "Validate / Re-validate\tCtrl+Shift+V",
+                        "Compare the analysis against the attached screenshot")
+        an_menu.AppendSeparator()
         an_menu.Append(_ID_BUILD_CONTEXT, "Build Project Context\tCtrl+Shift+A",
                         "Summarise all files for cross-file questions")
         an_menu.Append(_ID_ASK_PROJECT, "Ask Project Question\tCtrl+Shift+I",
@@ -140,6 +148,7 @@ class MainFrame(wx.Frame):
         # Bind menu events
         self.Bind(wx.EVT_MENU, lambda _e: self._open_folder_dialog(),  id=_ID_OPEN_FOLDER)
         self.Bind(wx.EVT_MENU, lambda _e: self._trigger_analyze(),     id=_ID_ANALYZE)
+        self.Bind(wx.EVT_MENU, lambda _e: self._trigger_validate(),   id=_ID_VALIDATE)
         self.Bind(wx.EVT_MENU, lambda _e: self._build_project_context(), id=_ID_BUILD_CONTEXT)
         self.Bind(wx.EVT_MENU, lambda _e: self._open_ask_project_dialog(), id=_ID_ASK_PROJECT)
         self.Bind(wx.EVT_MENU, lambda _e: self._copy_output(),         id=_ID_COPY)
@@ -154,6 +163,7 @@ class MainFrame(wx.Frame):
         accel_entries = [
             wx.AcceleratorEntry(wx.ACCEL_CTRL, ord("O"), _ID_OPEN_FOLDER),
             wx.AcceleratorEntry(wx.ACCEL_CTRL, ord("R"), _ID_ANALYZE),
+            wx.AcceleratorEntry(wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("V"), _ID_VALIDATE),
             wx.AcceleratorEntry(wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("A"), _ID_BUILD_CONTEXT),
             wx.AcceleratorEntry(wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("I"), _ID_ASK_PROJECT),
             wx.AcceleratorEntry(wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("C"), _ID_COPY),
@@ -346,6 +356,72 @@ class MainFrame(wx.Frame):
         btn = self._detail._analyze_btn
         btn.SetLabel("Re-analyze")
         btn.Enable()
+
+    # ── Validate ──────────────────────────────────────────────────────────────
+
+    def _trigger_validate(self) -> None:
+        if self._current_file:
+            self._start_validate(self._current_file)
+
+    def _start_validate(self, file: UIFile) -> None:
+        if not self._analyzer:
+            wx.MessageBox("No AI model selected. Use File → Choose AI Model.",
+                          "No Model", wx.OK | wx.ICON_WARNING, self)
+            return
+        if not file.analysis:
+            wx.MessageBox("Analyze this file first before validating.",
+                          "No Analysis", wx.OK | wx.ICON_WARNING, self)
+            return
+        if not file.attached_image_path:
+            wx.MessageBox(
+                "No screenshot attached.\n\n"
+                "Right-click the file in the sidebar and choose Attach Screenshot…",
+                "No Screenshot", wx.OK | wx.ICON_WARNING, self,
+            )
+            return
+
+        file.is_validating  = True
+        file.validate_error = None
+        self._detail.show_validation_progress()
+
+        analyzer = self._analyzer
+        prior    = file.analysis
+
+        def do_validate() -> None:
+            try:
+                result = analyzer.validate_against_screenshot(file, prior)
+                prior.validation = result
+                file.is_validating = False
+                wx.CallAfter(self._on_validation_done, file)
+            except Exception as exc:
+                file.is_validating  = False
+                file.validate_error = str(exc)
+                wx.CallAfter(self._on_validation_error, file)
+
+        threading.Thread(target=do_validate, daemon=True).start()
+
+    def _on_validation_done(self, file: UIFile) -> None:
+        if file.analysis and file.analysis.validation:
+            self._detail.show_validation_result(file.analysis.validation)
+        self._status.SetStatusText(f"Validation complete — {file.name}")
+
+    def _on_validation_error(self, file: UIFile) -> None:
+        self._detail.show_validation_error(file.validate_error or "Unknown error")
+        self._status.SetStatusText(f"Validation failed — {file.name}")
+
+    # ── Attachment callbacks ───────────────────────────────────────────────────
+
+    def _on_attachment_changed(self, file: UIFile) -> None:
+        """Called by SidebarPanel after attach or detach."""
+        self._detail.show_attachment_strip(file)
+        # If this is the currently-displayed file, refresh the full panel
+        if self._current_file and self._current_file.id == file.id:
+            self._current_file = file
+            self._detail.show_file(file)
+
+    def _on_detail_detach(self, file: UIFile) -> None:
+        """Called by the Detach button in the attachment strip."""
+        self._sidebar._detach_screenshot(file)
 
     # ── Follow-up ─────────────────────────────────────────────────────────────
 

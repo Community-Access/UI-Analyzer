@@ -7,7 +7,9 @@ import wx
 import wx.html2
 from typing import Callable, Optional
 
-from ui_analyzer.models.ui_file import UIFile, UIAnalysis, OutputMode, TableFormat
+from ui_analyzer.models.ui_file import (
+    UIFile, UIAnalysis, OutputMode, TableFormat, ValidationResult,
+)
 
 # Import the accessible webview library
 try:
@@ -29,6 +31,21 @@ except ImportError:
         return _wrap_html(paras)
 
 
+_KEY_BRIDGE_JS = """
+<script>
+document.addEventListener('keydown', function(e) {
+  if (e.ctrlKey && !e.shiftKey && e.key === 'r') {
+    e.preventDefault();
+    if (window.wx) window.wx.postMessage('analyze');
+  } else if (e.ctrlKey && e.shiftKey && (e.key === 'V' || e.key === 'v')) {
+    e.preventDefault();
+    if (window.wx) window.wx.postMessage('validate');
+  }
+});
+</script>
+"""
+
+
 def _wrap_html(body: str) -> str:
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -36,6 +53,7 @@ def _wrap_html(body: str) -> str:
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light dark">
+{_KEY_BRIDGE_JS}
 <style>
 body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
      font-size:14px;line-height:1.7;
@@ -103,12 +121,16 @@ class DetailPanel(wx.Panel):
         on_save:        Callable[[], None],
         on_follow_up:   Callable[[str], None],
         status_bar:     wx.StatusBar,
+        on_validate:    Optional[Callable[[UIFile], None]] = None,
+        on_detach:      Optional[Callable[[UIFile], None]] = None,
     ) -> None:
         super().__init__(parent)
         self._on_analyze    = on_analyze
         self._on_copy       = on_copy
         self._on_save       = on_save
         self._on_follow_up  = on_follow_up
+        self._on_validate   = on_validate
+        self._on_detach     = on_detach
         self._status_bar    = status_bar
         self._current_file: Optional[UIFile] = None
         self._current_mode  = OutputMode.PROSE
@@ -171,12 +193,44 @@ class DetailPanel(wx.Panel):
         self._analyze_btn.SetName("Analyze file")
         self._analyze_btn.SetToolTip("Run AI analysis on this file (Ctrl+R)")
         self._analyze_btn.Bind(wx.EVT_BUTTON, self._on_analyze_click)
-        tb.Add(self._analyze_btn, 0, wx.LEFT | wx.RIGHT, 6)
+        tb.Add(self._analyze_btn, 0, wx.LEFT, 6)
+
+        self._validate_btn = wx.Button(tb_panel, label="Validate", size=(96, 44))
+        self._validate_btn.SetName("Validate against screenshot")
+        self._validate_btn.SetToolTip(
+            "Compare the analysis against the attached screenshot (Ctrl+Shift+V). "
+            "Requires an analysis and an attached screenshot."
+        )
+        self._validate_btn.Bind(wx.EVT_BUTTON, self._on_validate_click)
+        self._validate_btn.Disable()
+        tb.Add(self._validate_btn, 0, wx.LEFT | wx.RIGHT, 4)
 
         tb_panel.SetSizer(tb)
         tb_panel.SetMinSize((-1, 44))
         sizer.Add(tb_panel, 0, wx.EXPAND)
         sizer.Add(wx.StaticLine(self), 0, wx.EXPAND)
+
+        # ── Attachment strip (shown when a screenshot is linked) ─────────────
+        self._attach_panel = wx.Panel(self)
+        self._attach_panel.SetBackgroundColour(wx.Colour(230, 245, 255))
+        ap = wx.BoxSizer(wx.HORIZONTAL)
+        self._attach_icon = wx.StaticText(self._attach_panel, label="📎")
+        self._attach_icon.SetToolTip("Screenshot attached")
+        ap.Add(self._attach_icon, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 8)
+        self._attach_lbl = wx.StaticText(self._attach_panel, label="")
+        self._attach_lbl.SetName("Attached screenshot filename")
+        ap.Add(self._attach_lbl, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 6)
+        self._detach_btn = wx.Button(self._attach_panel, label="Detach", size=(-1, 32))
+        self._detach_btn.SetName("Detach screenshot")
+        self._detach_btn.SetToolTip(
+            "Remove the linked screenshot and delete the sibling file from the project folder"
+        )
+        self._detach_btn.Bind(wx.EVT_BUTTON, self._on_detach_click)
+        ap.Add(self._detach_btn, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, 8)
+        self._attach_panel.SetSizer(ap)
+        self._attach_panel.SetMinSize((-1, 36))
+        self._attach_panel.Hide()
+        sizer.Add(self._attach_panel, 0, wx.EXPAND)
 
         # ── Content area ─────────────────────────────────────────────────────
 
@@ -245,6 +299,19 @@ class DetailPanel(wx.Panel):
 
         if hasattr(self._result_window, "SetName"):
             self._result_window.SetName("Analysis output")
+
+        # Register the "wx" postMessage handler so the JS key bridge can fire
+        # Ctrl+R → analyze and Ctrl+Shift+V → validate even when the WebView has focus
+        if hasattr(self._result_window, "AddScriptMessageHandler"):
+            try:
+                self._result_window.AddScriptMessageHandler("wx")
+                self._result_window.Bind(
+                    wx.html2.EVT_WEBVIEW_SCRIPT_MESSAGE_RECEIVED,
+                    self._on_webview_message,
+                )
+            except Exception:
+                pass
+
         sizer.Add(self._result_window, 1, wx.EXPAND)
 
         # Error state
@@ -254,16 +321,79 @@ class DetailPanel(wx.Panel):
         self._error_lbl = wx.StaticText(
             self._error_panel, label="", style=wx.ALIGN_CENTER
         )
+        self._error_lbl.SetName("Analysis error details")
         self._error_lbl.SetForegroundColour(wx.Colour(200, 50, 50))
         erp.Add(self._error_lbl, 0, wx.ALIGN_CENTER | wx.ALL, 12)
-        retry_btn = wx.Button(self._error_panel, label="Try Again")
-        retry_btn.SetName("Retry analysis")
-        retry_btn.SetToolTip("Retry the analysis")
-        retry_btn.Bind(wx.EVT_BUTTON, self._on_analyze_click)
-        erp.Add(retry_btn, 0, wx.ALIGN_CENTER)
+        self._retry_btn = wx.Button(self._error_panel, label="Try Again")
+        self._retry_btn.SetName("Retry analysis")
+        self._retry_btn.SetToolTip("Retry the analysis")
+        self._retry_btn.Bind(wx.EVT_BUTTON, self._on_analyze_click)
+        erp.Add(self._retry_btn, 0, wx.ALIGN_CENTER)
         erp.AddStretchSpacer()
         self._error_panel.SetSizer(erp)
         sizer.Add(self._error_panel, 1, wx.EXPAND)
+
+        # ── Validation progress panel ─────────────────────────────────────────
+        self._val_progress_panel = wx.Panel(self)
+        vpp = wx.BoxSizer(wx.VERTICAL)
+        self._val_gauge = wx.Gauge(self._val_progress_panel, range=0, size=(-1, 4))
+        self._val_gauge.SetName("Validation progress")
+        self._val_gauge.Pulse()
+        val_prog_lbl = wx.StaticText(
+            self._val_progress_panel,
+            label="Validating against screenshot…",
+            style=wx.ALIGN_CENTER,
+        )
+        vpp.Add(self._val_gauge, 0, wx.EXPAND)
+        vpp.Add(val_prog_lbl, 0, wx.ALIGN_CENTER | wx.TOP, 8)
+        self._val_progress_panel.SetSizer(vpp)
+        self._val_progress_panel.Hide()
+        sizer.Add(self._val_progress_panel, 0, wx.EXPAND | wx.ALL, 4)
+
+        # ── Validation error panel ────────────────────────────────────────────
+        self._val_error_panel = wx.Panel(self)
+        vep = wx.BoxSizer(wx.HORIZONTAL)
+        self._val_error_lbl = wx.StaticText(self._val_error_panel, label="")
+        self._val_error_lbl.SetName("Validation error details")
+        self._val_error_lbl.SetForegroundColour(wx.Colour(200, 50, 50))
+        vep.Add(self._val_error_lbl, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 8)
+        self._val_error_panel.SetSizer(vep)
+        self._val_error_panel.Hide()
+        sizer.Add(self._val_error_panel, 0, wx.EXPAND)
+
+        # ── Validation result panel ───────────────────────────────────────────
+        self._val_result_panel = wx.Panel(self)
+        vrp = wx.BoxSizer(wx.VERTICAL)
+
+        # Three groups: Stands By / Retracts / Additions
+        for attr, symbol, label, color in (
+            ("_val_stands_box",   "[confirmed]", "Stands By",  wx.Colour(230, 255, 230)),
+            ("_val_retracts_box", "[retracted]", "Retracts",   wx.Colour(255, 235, 230)),
+            ("_val_additions_box","[new]",        "Additions", wx.Colour(230, 235, 255)),
+        ):
+            group_panel = wx.Panel(self._val_result_panel)
+            group_panel.SetBackgroundColour(color)
+            gp = wx.BoxSizer(wx.VERTICAL)
+            # Symbol prefix ensures meaning is conveyed by text, not color alone (WCAG 1.4.1).
+            # SetName spells it out for screen readers so NVDA/JAWS read a clear label.
+            hdr = wx.StaticText(group_panel, label=f"{symbol}  {label}")
+            hdr.SetFont(hdr.GetFont().Bold())
+            hdr.SetName(f"Validation section: {label}")
+            gp.Add(hdr, 0, wx.ALL, 6)
+            list_ctrl = wx.ListCtrl(
+                group_panel,
+                style=wx.LC_REPORT | wx.LC_NO_HEADER | wx.BORDER_NONE,
+            )
+            list_ctrl.SetName(f"Validation {label.lower()} list")
+            list_ctrl.InsertColumn(0, label, width=400)
+            gp.Add(list_ctrl, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 4)
+            group_panel.SetSizer(gp)
+            vrp.Add(group_panel, 1, wx.EXPAND | wx.ALL, 2)
+            setattr(self, attr, list_ctrl)
+
+        self._val_result_panel.SetSizer(vrp)
+        self._val_result_panel.Hide()
+        sizer.Add(self._val_result_panel, 0, wx.EXPAND | wx.ALL, 4)
 
         # ── Follow-up bar ─────────────────────────────────────────────────────
         fu_panel = wx.Panel(self)
@@ -341,15 +471,49 @@ class DetailPanel(wx.Panel):
             f"Re-analyze {file.name}" if file.analysis else f"Analyze {file.name}"
         )
 
+        # Attachment strip
+        if file.attached_image_path:
+            self._attach_lbl.SetLabel(file.attached_image_path)
+            self._attach_panel.Show()
+        else:
+            self._attach_panel.Hide()
+
+        # Validate button — enabled only when analysis exists + screenshot attached
+        can_validate = bool(file.analysis and file.attached_image_path)
+        self._validate_btn.Enable(can_validate)
+        if not can_validate:
+            reasons = []
+            if not file.analysis:
+                reasons.append("run an analysis first")
+            if not file.attached_image_path:
+                reasons.append("attach a screenshot via right-click in the sidebar")
+            self._validate_btn.SetToolTip(
+                "Validate against screenshot (Ctrl+Shift+V). "
+                "To enable: " + " and ".join(reasons) + "."
+            )
+        else:
+            lbl = "Re-validate" if file.analysis and file.analysis.validation else "Validate"
+            self._validate_btn.SetLabel(lbl)
+            self._validate_btn.SetName(f"{lbl} {file.name} against screenshot")
+            self._validate_btn.SetToolTip(
+                "Compare the analysis against the attached screenshot (Ctrl+Shift+V)"
+            )
+
         if file.is_analyzing:
             self._show_state("loading")
             self._status_bar.SetStatusText(f"Analyzing {file.name}…")
+        elif file.is_validating:
+            self.show_validation_progress()
+        elif file.validate_error:
+            self.show_validation_error(file.validate_error)
         elif file.analyze_error:
             self._error_lbl.SetLabel(f"Analysis failed:\n{file.analyze_error}")
             self._show_state("error")
             self._status_bar.SetStatusText(f"Analysis failed for {file.name}")
         elif file.analysis:
             self._display_analysis(file.analysis)
+            if file.analysis.validation:
+                self.show_validation_result(file.analysis.validation)
         else:
             self._show_state("ready")
             self._status_bar.SetStatusText(
@@ -391,6 +555,75 @@ class DetailPanel(wx.Panel):
         )
         self._show_state("error")
         self._status_bar.SetStatusText(f"Analysis failed — {file.name}")
+        self._retry_btn.SetFocus()  # move AT focus so screen readers announce the error state
+
+    def show_attachment_strip(self, file: UIFile) -> None:
+        """Refresh the attachment strip after an attach/detach operation."""
+        self._current_file = file
+        if file.attached_image_path:
+            self._attach_lbl.SetLabel(file.attached_image_path)
+            self._attach_panel.Show()
+        else:
+            self._attach_panel.Hide()
+        can_validate = bool(file.analysis and file.attached_image_path)
+        self._validate_btn.Enable(can_validate)
+        self.Layout()
+
+    def show_validation_progress(self) -> None:
+        self._val_result_panel.Hide()
+        self._val_error_panel.Hide()
+        self._val_progress_panel.Show()
+        self._validate_btn.SetLabel("Validating…")
+        self._validate_btn.Disable()
+        self._status_bar.SetStatusText("Validating against screenshot…")
+        self.Layout()
+
+    def show_validation_error(self, msg: str) -> None:
+        self._val_progress_panel.Hide()
+        self._val_result_panel.Hide()
+        self._val_error_lbl.SetLabel(f"Validation failed: {msg}")
+        self._val_error_panel.Show()
+        self._validate_btn.SetLabel("Re-validate")
+        self._validate_btn.Enable()
+        self._status_bar.SetStatusText("Validation failed")
+        self.Layout()
+
+    def show_validation_result(self, result: ValidationResult) -> None:
+        self._val_progress_panel.Hide()
+        self._val_error_panel.Hide()
+
+        def _populate(list_ctrl: wx.ListCtrl, items: list) -> None:
+            list_ctrl.DeleteAllItems()
+            for i, item in enumerate(items):
+                list_ctrl.InsertItem(i, item.text)
+            # Auto-size the column to content
+            list_ctrl.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+            # Cap height based on item count
+            row_h = list_ctrl.GetItemRect(0).height if items else 24
+            list_ctrl.SetMinSize((-1, min(max(row_h * len(items), 24), 200)))
+
+        if result.stands_by:
+            _populate(self._val_stands_box, result.stands_by)
+        if result.retracts:
+            _populate(self._val_retracts_box, result.retracts)
+        if result.additions:
+            _populate(self._val_additions_box, result.additions)
+
+        self._val_result_panel.Show()
+        self._validate_btn.SetLabel("Re-validate")
+        self._validate_btn.Enable()
+        self._status_bar.SetStatusText("Validation complete")
+        self.Layout()
+
+        # Announce to screen reader
+        total = (len(result.stands_by) + len(result.retracts) + len(result.additions))
+        if _HAS_ACCESSIBLE_WV and hasattr(self._result_view, "status"):
+            self._result_view.status(
+                f"Validation complete. "
+                f"{len(result.stands_by)} confirmed, "
+                f"{len(result.retracts)} retracted, "
+                f"{len(result.additions)} new additions."
+            )
 
     def append_follow_up(self, answer: str) -> None:
         """Append follow-up answer to the output view."""
@@ -450,7 +683,23 @@ class DetailPanel(wx.Panel):
             self._analyze_btn.Disable()
             self._show_state("loading")
             self._stream_text.SetValue("")
+            self._stream_text.SetFocus()  # move AT focus so screen readers announce live output
             self._on_analyze(self._current_file, self._current_mode, self._current_fmt)
+
+    def _on_validate_click(self, _event: wx.CommandEvent) -> None:
+        if self._current_file and self._on_validate:
+            self._on_validate(self._current_file)
+
+    def _on_detach_click(self, _event: wx.CommandEvent) -> None:
+        if self._current_file and self._on_detach:
+            self._on_detach(self._current_file)
+
+    def _on_webview_message(self, event: wx.html2.WebViewEvent) -> None:
+        msg = event.GetString()
+        if msg == "analyze":
+            self._on_analyze_click(event)
+        elif msg == "validate":
+            self._on_validate_click(event)
 
     def _on_follow_up_submit(self, _event: wx.CommandEvent) -> None:
         question = self._fu_field.GetValue().strip()

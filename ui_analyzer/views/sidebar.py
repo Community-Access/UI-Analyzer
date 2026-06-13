@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import shutil
 import wx
 from pathlib import Path
 from typing import Callable, Optional
 
 from ui_analyzer.models.ui_file import UIFile, UIFileType
+from ui_analyzer.services.attachment_store import attachment_filename, set_attachment
 
 # File type → short badge shown in the list
 _TYPE_BADGE: dict[UIFileType, str] = {
@@ -63,11 +65,13 @@ class SidebarPanel(wx.Panel):
         on_select: Callable[[UIFile], None],
         on_open_folder: Callable[[], None],
         on_drop_folder: Callable[[Path], None],
+        on_attachment_changed: Optional[Callable[[UIFile], None]] = None,
     ) -> None:
         super().__init__(parent)
-        self._on_select       = on_select
-        self._on_open_folder  = on_open_folder
-        self._files: list[UIFile] = []
+        self._on_select             = on_select
+        self._on_open_folder        = on_open_folder
+        self._on_attachment_changed = on_attachment_changed
+        self._files: list[UIFile]   = []
 
         self._build_ui()
         self.SetDropTarget(FolderDropTarget(on_drop_folder))
@@ -109,6 +113,8 @@ class SidebarPanel(wx.Panel):
         self._list.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_item_selected)
         self._list.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self._on_item_activated)
         self._list.Bind(wx.EVT_KEY_DOWN, self._on_key)
+        self._list.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self._on_right_click)
+        self._list.Bind(wx.EVT_CONTEXT_MENU, self._on_context_menu)
 
         sizer.Add(self._list, 1, wx.EXPAND)
 
@@ -184,6 +190,96 @@ class SidebarPanel(wx.Panel):
             self._on_open_folder()
         else:
             event.Skip()
+
+    def _on_right_click(self, event: wx.ListEvent) -> None:
+        idx = event.GetIndex()
+        if 0 <= idx < len(self._files):
+            self._list.Select(idx)
+            self._show_context_menu(self._files[idx])
+
+    def _on_context_menu(self, event: wx.ContextMenuEvent) -> None:
+        # Fired by the keyboard context-menu key (Shift+F10 / Apps key)
+        file = self.selected_file
+        if file is not None:
+            self._show_context_menu(file)
+
+    def _show_context_menu(self, file: UIFile) -> None:
+        menu = wx.Menu()
+        has_attachment = bool(file.attached_image_path)
+
+        attach_item = menu.Append(wx.ID_ANY, "Attach Screenshot…")
+        attach_item.SetHelp("Choose a PNG screenshot to link to this file")
+        self.Bind(wx.EVT_MENU, lambda _e: self._attach_screenshot(file), attach_item)
+
+        detach_item = menu.Append(wx.ID_ANY, "Detach Screenshot")
+        detach_item.SetHelp("Remove the linked screenshot and delete the sibling file")
+        detach_item.Enable(has_attachment)
+        self.Bind(wx.EVT_MENU, lambda _e: self._detach_screenshot(file), detach_item)
+
+        self.PopupMenu(menu)
+        menu.Destroy()
+
+    def _attach_screenshot(self, file: UIFile) -> None:
+        if file.folder_path is None:
+            wx.MessageBox(
+                "Cannot attach a screenshot: the file was not loaded from a scanned folder.",
+                "Attach Screenshot",
+                wx.OK | wx.ICON_WARNING,
+                self,
+            )
+            return
+
+        with wx.FileDialog(
+            self,
+            message=f"Attach screenshot to {file.name}",
+            wildcard="PNG images (*.png)|*.png",
+            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
+        ) as dlg:
+            if dlg.ShowModal() != wx.ID_OK:
+                return
+            src = Path(dlg.GetPath())
+
+        dest_name = attachment_filename(file.name)
+        dest = file.folder_path / dest_name
+        try:
+            shutil.copy2(src, dest)
+        except OSError as exc:
+            wx.MessageBox(
+                f"Could not copy screenshot:\n{exc}",
+                "Attach Screenshot",
+                wx.OK | wx.ICON_ERROR,
+                self,
+            )
+            return
+
+        set_attachment(dest_name, file.relative_path)
+        file.attached_image_path = dest_name
+
+        if self._on_attachment_changed:
+            self._on_attachment_changed(file)
+
+    def _detach_screenshot(self, file: UIFile) -> None:
+        if file.folder_path is None or not file.attached_image_path:
+            return
+
+        abs_path = file.folder_path / file.attached_image_path
+        try:
+            if abs_path.is_file():
+                abs_path.unlink()
+        except OSError as exc:
+            wx.MessageBox(
+                f"Could not delete screenshot file:\n{exc}",
+                "Detach Screenshot",
+                wx.OK | wx.ICON_ERROR,
+                self,
+            )
+            return
+
+        set_attachment(None, file.relative_path)
+        file.attached_image_path = None
+
+        if self._on_attachment_changed:
+            self._on_attachment_changed(file)
 
     def _refresh_hint(self) -> None:
         has_files = bool(self._files)
