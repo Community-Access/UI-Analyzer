@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Callable, Generator, Optional
 
 from ui_analyzer.models.ui_file import UIFile, UIFileType, UIAnalysis, OutputMode, TableFormat
-from ui_analyzer.services.ollama_client import OllamaClient
+from ui_analyzer.services.ai_client import AIClient
 from ui_analyzer.services.contrast_advisor import contrast_report
 
 # ── Image OCR (optional — degrades gracefully if not installed) ───────────────
@@ -359,7 +359,7 @@ CONTEXT_BUDGET = 12_000  # chars before rolling
 
 
 class UIAnalyzer:
-    def __init__(self, client: OllamaClient, model: str) -> None:
+    def __init__(self, client: AIClient, model: str) -> None:
         self._client         = client
         self.model           = model
         self._sessions: dict[str, FileSession] = {}

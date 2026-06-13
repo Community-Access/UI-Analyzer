@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import json
-from typing import Generator, Optional
+from ui_analyzer.services.ai_client import AIClient
 import httpx
-
-BASE_URL = "http://localhost:11434"
 
 # ── Model capability metadata ─────────────────────────────────────────────────
 # Maps model family prefix → (description, best-for tags, min RAM GB)
@@ -76,8 +74,8 @@ def best_model_for_filetype(installed: list[str], file_type_label: str) -> Optio
 
 # ── OllamaClient ─────────────────────────────────────────────────────────────
 
-class OllamaClient:
-    def __init__(self, base_url: str = BASE_URL, timeout: float = 120.0) -> None:
+class OllamaClient(AIClient):
+    def __init__(self, base_url: str, timeout: float = 120.0) -> None:
         self._base = base_url.rstrip("/")
         self._timeout = timeout
 

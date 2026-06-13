@@ -10,11 +10,15 @@ import wx
 
 from ui_analyzer.models.ui_file import UIFile, OutputMode, TableFormat
 from ui_analyzer.services.file_scanner import scan_folder
+from ui_analyzer.services.config_manager import ConfigManager
 from ui_analyzer.services.ollama_client import OllamaClient
+from ui_analyzer.services.anthropic_client import AnthropicClient
+from ui_analyzer.services.openai_client import OpenAIClient
 from ui_analyzer.services.ui_analyzer import UIAnalyzer
 from ui_analyzer.views.sidebar import SidebarPanel
 from ui_analyzer.views.detail_panel import DetailPanel, _HAS_ACCESSIBLE_WV
 from ui_analyzer.views.model_picker import ModelPickerDialog
+from ui_analyzer.views.settings_dialog import SettingsDialog
 
 _APP_NAME    = "UI Analyzer"
 _DEFAULT_W   = 1100
@@ -29,6 +33,7 @@ _ID_ASK_PROJECT   = wx.NewIdRef()
 _ID_COPY          = wx.NewIdRef()
 _ID_SAVE          = wx.NewIdRef()
 _ID_MODEL_PICKER  = wx.NewIdRef()
+_ID_SETTINGS       = wx.NewIdRef()
 
 
 class MainFrame(wx.Frame):
@@ -48,7 +53,8 @@ class MainFrame(wx.Frame):
             title=_APP_NAME,
             size=(_DEFAULT_W, _DEFAULT_H),
         )
-        self._client   = OllamaClient()
+        self._config   = ConfigManager()
+        self._client   = self._init_ai_client()
         self._model: Optional[str] = None
         self._analyzer: Optional[UIAnalyzer] = None
         self._current_file: Optional[UIFile] = None
@@ -104,6 +110,8 @@ class MainFrame(wx.Frame):
         file_menu.AppendSeparator()
         file_menu.Append(_ID_MODEL_PICKER, "Choose AI Model…\tCtrl+M",
                           "Select which Ollama model to use")
+        file_menu.Append(_ID_SETTINGS, "Settings…\tCtrl+,",
+                          "Configure AI providers and connectivity")
         file_menu.AppendSeparator()
         file_menu.Append(wx.ID_EXIT, "Quit\tCtrl+Q")
         mb.Append(file_menu, "&File")
@@ -137,6 +145,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, lambda _e: self._copy_output(),         id=_ID_COPY)
         self.Bind(wx.EVT_MENU, lambda _e: self._save_output(),         id=_ID_SAVE)
         self.Bind(wx.EVT_MENU, lambda _e: self._open_model_picker(),   id=_ID_MODEL_PICKER)
+        self.Bind(wx.EVT_MENU, lambda _e: self._open_settings_dialog(),   id=_ID_SETTINGS)
         self.Bind(wx.EVT_MENU, lambda _e: self.Close(),                id=wx.ID_EXIT)
 
     def _build_accelerators(self) -> None:
@@ -150,8 +159,39 @@ class MainFrame(wx.Frame):
             wx.AcceleratorEntry(wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("C"), _ID_COPY),
             wx.AcceleratorEntry(wx.ACCEL_CTRL, ord("S"), _ID_SAVE),
             wx.AcceleratorEntry(wx.ACCEL_CTRL, ord("M"), _ID_MODEL_PICKER),
+            wx.AcceleratorEntry(wx.ACCEL_CTRL, ord(","), _ID_SETTINGS),
         ]
         self.SetAcceleratorTable(wx.AcceleratorTable(accel_entries))
+
+    def _init_ai_client(self) -> AIClient:
+        """Instantiate the correct AI client based on current configuration."""
+        provider = self._config.get("provider", "ollama")
+
+        if provider == "ollama":
+            url = self._config.get("ollama_url", "http://localhost:11434")
+            return OllamaClient(base_url=url)
+        elif provider == "anthropic":
+            key = self._config.get_api_key("anthropic")
+            if not key:
+                return OllamaClient(base_url="http://localhost:11434") # Fallback
+            return AnthropicClient(api_key=key)
+        elif provider == "openai":
+            key = self._config.get_api_key("openai")
+            if not key:
+                return OllamaClient(base_url="http://localhost:11434") # Fallback
+            return OpenAIClient(api_key=key)
+
+        return OllamaClient(base_url="http://localhost:11434")
+
+    def _open_settings_dialog(self) -> None:
+        dlg = SettingsDialog(self, self._config)
+        if dlg.ShowModal() == wx.ID_OK:
+            # Settings changed, re-init client and analyzer
+            self._client = self._init_ai_client()
+            self._model = None
+            self._auto_select_model()
+        dlg.Destroy()
+
 
     # ── Model selection ───────────────────────────────────────────────────────
 
@@ -234,7 +274,7 @@ class MainFrame(wx.Frame):
     def _on_file_selected(self, file: UIFile) -> None:
         self._current_file = file
         self._detail.show_file(file)
-        if self._analyzer and self._model:
+        if self._analyzer and self._model and self._config.get("provider") == "ollama":
             from ui_analyzer.services.ollama_client import best_model_for_filetype
             recommended = best_model_for_filetype(
                 [m["name"] for m in self._client.list_models()],
@@ -295,7 +335,7 @@ class MainFrame(wx.Frame):
         self._analyze_btn_reset()
         # Move focus to the output view so screen readers immediately read the result
         # (NVDA/JAWS announce the view's accessible name + content on focus)
-        self._detail._result_view.SetFocus()
+        self._detail.set_focus()
 
     def _on_analysis_error(self, file: UIFile) -> None:
         self._sidebar.update_file(file)
@@ -434,16 +474,21 @@ class ProjectQuestionDialog(wx.Dialog):
             try:
                 from wx_accessible_webview import AccessibleWebView  # type: ignore[import]
                 self._answer_view = AccessibleWebView(panel)
+                self._answer_window = self._answer_view.control
             except Exception:
                 self._answer_view = wx.TextCtrl(
                     panel, style=wx.TE_MULTILINE | wx.TE_READONLY
                 )
+                self._answer_window = self._answer_view
         else:
             self._answer_view = wx.TextCtrl(
                 panel, style=wx.TE_MULTILINE | wx.TE_READONLY
             )
-        self._answer_view.SetName("Project question answers")
-        sizer.Add(self._answer_view, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 12)
+            self._answer_window = self._answer_view
+
+        if hasattr(self._answer_window, "SetName"):
+            self._answer_window.SetName("Project question answers")
+        sizer.Add(self._answer_window, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 12)
 
         # Question bar
         q_row = wx.BoxSizer(wx.HORIZONTAL)

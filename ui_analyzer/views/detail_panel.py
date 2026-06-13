@@ -34,11 +34,14 @@ def _wrap_html(body: str) -> str:
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light dark">
 <style>
 body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-     font-size:14px;line-height:1.7;color:#1c1c1e;background:#fff;
-     margin:16px;max-width:820px}}
+     font-size:14px;line-height:1.7;
+     margin:16px;max-width:820px;
+     background-color: transparent;
+     color: #1c1c1e;}}
 h2{{font-size:16px;font-weight:700;margin:24px 0 8px;
    border-bottom:1px solid #d2d2d7;padding-bottom:4px}}
 h3{{font-size:14px;font-weight:600;margin:16px 0 6px}}
@@ -54,7 +57,7 @@ td{{padding:8px 12px;border:1px solid #c6c6c8;vertical-align:top}}
 tr:nth-child(even) td{{background:#f9f9fb}}
 hr{{border:none;border-top:1px solid #d2d2d7;margin:20px 0}}
 @media(prefers-color-scheme:dark){{
-  body{{color:#f2f2f7;background:#1c1c1e}}
+  body{{color: #f2f2f7; background-color: transparent;}}
   h2{{border-bottom-color:#38383a}}
   code,pre{{background:#2c2c2e}}
   th{{background:#2c2c2e;border-color:#48484a}}
@@ -68,7 +71,7 @@ hr{{border:none;border-top:1px solid #d2d2d7;margin:20px 0}}
 }}
 </style>
 </head>
-<body>
+<body style="background-color: transparent;">
 {body}
 </body>
 </html>"""
@@ -235,10 +238,14 @@ class DetailPanel(wx.Panel):
         # Result state — AccessibleWebView (falls back to wx.html2.WebView)
         if _HAS_ACCESSIBLE_WV:
             self._result_view = AccessibleWebView(self)
+            self._result_window = self._result_view.control
         else:
             self._result_view = wx.html2.WebView.New(self)
-        self._result_view.SetName("Analysis output")
-        sizer.Add(self._result_view, 1, wx.EXPAND)
+            self._result_window = self._result_view
+
+        if hasattr(self._result_window, "SetName"):
+            self._result_window.SetName("Analysis output")
+        sizer.Add(self._result_window, 1, wx.EXPAND)
 
         # Error state
         self._error_panel = wx.Panel(self)
@@ -305,7 +312,7 @@ class DetailPanel(wx.Panel):
             "empty":   self._empty_panel,
             "ready":   self._ready_panel,
             "loading": self._loading_panel,
-            "result":  self._result_view,
+            "result":  self._result_window,
             "error":   self._error_panel,
         }
         for name, panel in panels.items():
@@ -319,6 +326,10 @@ class DetailPanel(wx.Panel):
         self._save_btn.Show(show_actions)
 
         self.Layout()
+
+    def set_focus(self) -> None:
+        """Move keyboard focus to the analysis output view."""
+        self._result_window.SetFocus()
 
     # ── Public API ────────────────────────────────────────────────────────────
 
