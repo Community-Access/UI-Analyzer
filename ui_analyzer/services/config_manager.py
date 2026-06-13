@@ -75,3 +75,14 @@ class ConfigManager:
             keyring.delete_password(APP_NAME, provider)
         except Exception:
             pass
+
+    # ── Crawl config helpers ──────────────────────────────────────────────────
+
+    def get_crawl_config(self) -> dict:
+        """Return the saved crawl config dict (or empty dict for defaults)."""
+        return dict(self._data.get("crawl_config", {}))
+
+    def set_crawl_config(self, config_dict: dict) -> None:
+        """Persist crawl config to disk."""
+        self._data["crawl_config"] = config_dict
+        self.save()

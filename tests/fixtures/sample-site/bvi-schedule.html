@@ -1,0 +1,2124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2026 Blind and Visually Impaired Summer Academy Schedule</title>
+    <style>
+      body {
+        font-family: Verdana, sans-serif;
+        margin: 20px;
+        line-height: 1.6;
+        background-color: white; /* Changed from #fdfdfd to white */
+        color: black; /* Changed from #333 to black */
+      }
+      header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      header img {
+        max-width: 150px;
+        margin-bottom: 10px;
+      }
+      h1 {
+        color: black; /* UPDATED from #2c3e50 */
+        font-size: 2em;
+      }
+      h2 {
+        color: black; /* UPDATED from #34495e */
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 5px;
+        margin-top: 30px;
+        font-size: 1.5em;
+      }
+      h3,
+      p {
+        margin-top: 8px; /* Approx 6pt */
+        margin-bottom: 8px; /* Approx 6pt */
+      }
+
+      nav.toc {
+        background-color: white; /* UPDATED from #ecf0f1 */
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 30px;
+      }
+      nav.toc h2 {
+        margin-top: 0;
+        border-bottom: none;
+        color: #000000;
+      }
+      nav.toc ul {
+        list-style-type: none;
+        padding: 0;
+      }
+      nav.toc li a {
+        text-decoration: none;
+        color: #2980b9;
+        display: block;
+        padding: 5px 0;
+      }
+      nav.toc li a:hover {
+        text-decoration: underline;
+        color: #1f618d;
+      }
+      a:focus-visible {
+        outline: 3px solid #005fcc;
+        outline-offset: 3px;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      .sr-only:focus,
+      .sr-only:focus-visible {
+        position: static;
+        display: inline-block;
+        width: auto;
+        height: auto;
+        margin: 0 0 16px;
+        padding: 8px 12px;
+        overflow: visible;
+        clip: auto;
+        white-space: normal;
+        background: #ffffff;
+        color: #000000;
+        border: 3px solid #005fcc;
+      }
+      :root {
+        --time-column-width: 11.5rem;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+        table-layout: fixed;
+      }
+      caption {
+        caption-side: top;
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-bottom: 10px;
+        text-align: left;
+        color: #000000; /* Changed from #ffffff to black for better contrast */
+      }
+      th,
+      td {
+        border: 1px solid #bdc3c7;
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+        overflow-wrap: anywhere;
+      }
+      thead th {
+        background-color: #b4c6e7; /* UPDATED */
+        color: black; /* UPDATED */
+        font-weight: bold;
+      }
+      tbody th[scope="row"] {
+        background-color: white;
+        color: black;
+        font-weight: bold;
+      }
+      th:first-child,
+      td:first-child {
+        width: var(--time-column-width);
+        min-width: var(--time-column-width);
+        max-width: var(--time-column-width);
+        white-space: nowrap;
+        overflow-wrap: normal;
+        word-break: normal;
+      }
+      /* tbody tr:nth-child(odd) {
+            background-color: #f9f9f9;
+        } */ /* Commented out to ensure default white background for unstyled rows */
+      tbody tr:hover {
+        background-color: #eaf2f8;
+      }
+      ul {
+        /* Updated margins */
+        margin-top: 3pt; /* Approx 4px, was 8px */
+        margin-bottom: 3pt; /* Approx 4px, was 8px */
+        padding-left: 20px;
+      }
+      strong {
+        font-weight: bold;
+        color: inherit;
+      }
+
+      /* Added for specific black text override */
+      .important-black-text {
+        color: black !important;
+      }
+
+      /* NEW: Style for Medication Management list items */
+      .Med-Management-list li {
+        font-family: Verdana, sans-serif;
+        font-size: 14pt;
+        font-weight: bold;
+      }
+
+      /* NEW: Define default white background and black text for general activity classes */
+      .activity-orientation,
+      .activity-training,
+      .activity-travel,
+      .activity-admin,
+      .activity-group-a,
+      .activity-group-b,
+      .activity-group-a1,
+      .activity-group-a2,
+      .activity-group-b1,
+      .activity-group-b2,
+      .activity-weekend {
+        /* Added activity-weekend */
+        background-color: white !important; /* Ensured !important */
+        color: black !important; /* Ensured !important */
+      }
+
+      .activity-evening {
+        background-color: #e6e6fa !important; /* Lavender - ensuring this is active */
+      }
+
+      /* === Custom Color Coding === */
+      .cell-meal {
+        background-color: #fbe4d5 !important;
+      }
+      .cell-rd-training {
+        background-color: #e7d2fa !important;
+      }
+      .cell-comm-setup {
+        background-color: #fff2cc !important;
+      }
+      .cell-drop-off-belongings {
+        background-color: #e2efd9 !important;
+      }
+      .cell-student-arrival-important {
+        background-color: #d5f4ff !important;
+      }
+      .cell-medication-management {
+        background-color: #f3bfca !important;
+      }
+      .cell-student-welcome {
+        background-color: #e2cffa !important;
+      }
+      .cell-lights-out {
+        background-color: #f3bfca !important;
+      }
+      .cell-ra-meeting {
+        background-color: #e7d2fa !important;
+      }
+
+      /* Specific alert for departure text */
+      .text-departure-alert {
+        color: #8b0000; /* Dark Red */
+        font-weight: bold;
+        background-color: white !important; /* Ensure white background for this specific text */
+      }
+      .mobile-cell-label {
+        display: none;
+      }
+
+      @media screen and (min-width: 768px) {
+        body {
+          margin: 20px;
+        }
+
+        table {
+          width: 100%;
+        }
+      }
+
+      @media screen and (max-width: 767px) {
+        body {
+          margin: 12px;
+          line-height: 1.5;
+        }
+
+        h1 {
+          font-size: 1.6em;
+        }
+
+        h2 {
+          font-size: 1.25em;
+        }
+
+        h3 {
+          font-size: 1em;
+        }
+
+        table,
+        caption,
+        thead,
+        tbody,
+        tr,
+        th,
+        td {
+          display: block;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        table {
+          border: 0;
+          box-shadow: none;
+        }
+
+        caption {
+          margin-bottom: 8px;
+        }
+
+        thead {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border: 0;
+        }
+
+        tbody tr {
+          border: 1px solid #7f8c8d;
+          margin-bottom: 16px;
+        }
+
+        th,
+        td {
+          border-width: 0 0 1px;
+        }
+
+        td:last-child {
+          border-bottom: 0;
+        }
+
+        th:first-child,
+        td:first-child {
+          width: 100%;
+          min-width: 0;
+          white-space: nowrap;
+          font-weight: bold;
+          background-color: #b4c6e7 !important;
+        }
+
+        .mobile-cell-label {
+          display: block;
+          font-weight: bold;
+          margin-bottom: 4px;
+        }
+      }
+
+      @media print {
+        @page {
+          margin: 0.5in;
+        }
+
+        body {
+          margin: 0;
+          font-size: 10pt;
+          line-height: 1.25;
+        }
+
+        nav.toc {
+          display: none;
+        }
+
+        section {
+          break-before: page;
+          page-break-before: always;
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+
+        section:first-of-type {
+          break-before: auto;
+          page-break-before: auto;
+        }
+
+        h2,
+        table,
+        tr {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+
+        table {
+          width: 100%;
+          box-shadow: none;
+        }
+
+        th,
+        td {
+          padding: 5px 7px;
+        }
+
+        th:first-child,
+        td:first-child {
+          width: 1.45in;
+          min-width: 1.45in;
+          max-width: 1.45in;
+          white-space: nowrap;
+          overflow-wrap: normal;
+          word-break: normal;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <img
+        src="C:\\Users\\becnc\\OneDrive\\Desktop\\Python_work\\Code\\SA\\Summer Academy Logo.jpg"
+        alt="Summer Academy Logo"
+      />
+      <!-- UPDATED src path to absolute -->
+      <h1>2026 Blind and Visually Impaired Summer Academy Schedule</h1>
+    </header>
+
+    <a href="#main-content" class="sr-only">Skip to main content</a>
+
+    <nav class="toc" aria-labelledby="toc-heading">
+      <h2 id="toc-heading">Table of Contents</h2>
+      <ul>
+        <li><a href="#thursday-june-11">Thursday June 11th</a></li>
+        <li><a href="#friday-june-12">Friday June 12th</a></li>
+        <li><a href="#saturday-june-13">Saturday June 13th</a></li>
+        <li><a href="#sunday-june-14">Sunday June 14th</a></li>
+        <li><a href="#monday-june-15">Monday June 15th</a></li>
+        <li><a href="#tuesday-june-16">Tuesday June 16th</a></li>
+        <li><a href="#wednesday-june-17">Wednesday June 17th</a></li>
+        <li><a href="#thursday-june-18">Thursday June 18th</a></li>
+        <li><a href="#friday-june-19">Friday June 19th</a></li>
+        <li><a href="#saturday-june-20">Saturday June 20th</a></li>
+        <li><a href="#sunday-june-21">Sunday June 21st</a></li>
+        <li><a href="#monday-june-22">Monday June 22nd</a></li>
+      </ul>
+    </nav>
+
+    <main id="main-content">
+      <section id="thursday-june-11" aria-labelledby="heading-thursday-june-11">
+        <h2 id="heading-thursday-june-11">Thursday June 11th</h2>
+        <table>
+          <caption>
+            Office Move In
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Time</th>
+              <th scope="col">Activity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row" id="time-thursday-june-11-1">8:00 AM – 10:00 AM</th>
+              <td
+                class="activity-admin"
+               
+              >
+                <h3>
+                  BVI and DHH Summer Academy Equipment picked up from Altoona
+                  and delivered to Stuart Hall
+                </h3>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" id="time-thursday-june-11-2">10:00 AM – 12:00 PM</th>
+              <td
+                class="activity-admin"
+               
+              >
+                <h3>Move into Summer Academy Office</h3>
+                <ul>
+                  <li>Organize Equipment</li>
+                  <li>Organize Curriculum Equipment</li>
+                  <li>Prep for RA Arrival</li>
+                </ul>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-meal" id="time-thursday-june-11-3">
+                12:00 PM – 1:00 PM
+              </th>
+              <td class="cell-meal">
+                <h3>Lunch</h3>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" id="time-thursday-june-11-4">1:00 PM – 5:00 PM</th>
+              <td
+                class="activity-admin"
+               
+              >
+                <h3>Set up Summer Academy Office and Rooms</h3>
+                <ul>
+                  <li>Organize Equipment</li>
+                  <li>Organize Curriculum Equipment</li>
+                  <li>Prep for RA Arrival</li>
+                </ul>
+              </td>
+            </tr>
+            <tr class="cell-meal">
+              <!-- ADDED class for background color -->
+              <th scope="row" class="cell-meal" id="time-thursday-june-11-5">5:00 PM</th>
+              <!-- ADDED class for background color -->
+              <td class="cell-meal">
+                <h3>Finish for the day</h3>
+              </td>
+              <!-- CHANGED to h3 and ADDED class -->
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="friday-june-12" aria-labelledby="heading-friday-june-12">
+        <h2 id="heading-friday-june-12">Friday June 12th</h2>
+        <table>
+          <caption>
+            RD and RA Arrival
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Time</th>
+              <th scope="col">Activity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row" id="time-friday-june-12-1">9:30 AM – 6:00 PM</th>
+              <td
+                class="activity-admin"
+               
+              >
+                <h3>Office Set Up</h3>
+                Prep for RD Arrival
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" id="time-friday-june-12-2">11:00 AM – 12:00 PM</th>
+              <td
+                class="activity-admin"
+               
+              >
+                <h3>RD Arrival at Stuart Hall</h3>
+                <ul>
+                  <li>Drop Belongings at Dorm</li>
+                  <li>Park at Designated Parking Deck</li>
+                  <li>Check in at Summer Academy Office - Stuart Hall</li>
+                  <li>
+                    (RDs should plan to eat Lunch on their own before training
+                    begins at 1:00pm)
+                  </li>
+                </ul>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-meal" id="time-friday-june-12-3">
+                12:00 PM – 1:00 PM
+              </th>
+              <td class="cell-meal">
+                <h3>Lunch</h3>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-rd-training" id="time-friday-june-12-4">
+                1:00 PM – 4:30 PM
+              </th>
+              <!-- ADDED class for background color -->
+              <td
+                class="cell-rd-training"
+               
+              >
+                <h3>RD Training</h3>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" id="time-friday-june-12-5">4:30 PM – 6:00 PM</th>
+              <td
+                class="activity-admin"
+               
+              >
+                <h3>RA Arrival</h3>
+                <!-- Changed to h3 -->
+                <ul>
+                  <!-- Added ul for consistency -->
+                  <li>Drop Belongings at Dorm</li>
+                  <li>Park at Designated Parking Deck</li>
+                  <li>Check in at Summer Academy Office - Stuart Hall</li>
+                </ul>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-meal" id="time-friday-june-12-6">6:00 PM</th>
+              <td class="cell-meal">
+                <h3>Dinner On Your Own</h3>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="saturday-june-13" aria-labelledby="heading-saturday-june-13">
+        <h2 id="heading-saturday-june-13">Saturday June 13th</h2>
+        <table>
+          <caption>
+            RA Training Day 1
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Time</th>
+              <th scope="col">Activity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row" class="cell-meal" id="time-saturday-june-13-1">
+                7:00 AM – 10:00 AM
+              </th>
+              <td class="cell-meal">
+                <h3>Breakfast</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-comm-setup" id="time-saturday-june-13-2">
+                10:00 AM – 12:15 PM
+              </th>
+              <!-- Ensure time cell has class if activity cell does -->
+              <td
+                class="cell-comm-setup"
+               
+              >
+              <h3>RA Training / Set up Comm Access Equipment and Welcome to Summer Academy</h3>
+		<p>217 Business Bldg. Grace Fontanez, Anne Strollo </p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-meal" id="time-saturday-june-13-4">
+                12:30 PM – 1:30 PM
+              </th>
+              <td class="cell-meal">
+                <h3>Lunch</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" id="time-saturday-june-13-5">1:45 PM – 2:15 PM</th>
+              <td class="activity-training" 
+	>
+                <h3>PSU/Summer Academy Rules and Expectations</h3>
+		<p> 217 Business Bldg. 
+		    Autumn Spotts
+	        </p>
+              </td>
+           </tr>
+            <tr>
+              <th scope="row" id="time-saturday-june-13-6">2:15 PM – 4:45 PM</th>
+              <td
+                class="activity-training"
+               
+              >
+                <h3>RA Training O&amp;M &amp; Vision Basics</h3>
+                <p> 
+		217 Business Bldg.
+		Holly Short, Mindy Miller, Doug Yeager
+		</p>
+            </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-meal" id="time-saturday-june-13-7">5:00 PM - 6:00 PM</th>
+              <td class="cell-meal">
+                <h3>Dinner - Simulated BVI</h3>
+              <p>
+	      Findlay Commons
+	      Holly Short, Mindy Miller, Doug Yeager
+	      </p>
+	      </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="sunday-june-14" aria-labelledby="heading-sunday-june-14">
+        <h2 id="heading-sunday-june-14">Sunday June 14th</h2>
+        <table>
+          <caption>
+            RA Training Day 2
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Time</th>
+              <th scope="col">Activity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row" class="cell-meal" id="time-sunday-june-14-1">
+                7:00 AM – 8:15 AM
+              </th>
+              <td class="cell-meal">
+                <h3>Breakfast</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" id="time-sunday-june-14-2">9:00 AM – 12:00 PM</th>
+              <td
+                class="activity-training"
+               
+              >
+                <h3>RA Training / RA Training Basics</h3>
+                <p>217 Business Building</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-meal" id="time-sunday-june-14-3">
+                12:00 PM – 1:00 PM
+              </th>
+              <td class="cell-meal">
+                <h3>Lunch</h3>
+                <p>Findlay Commons – Simulated Lunch</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" id="time-sunday-june-14-5">1:00 PM – 3:45 PM</th>
+              <td
+                class="activity-training"
+               
+              >
+                <h3>RA Training ASL and Comm Access Basics</h3>
+                <p>217 Business Bldg.
+		   Nick Mastromatteo, Shasta Dreese
+		</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" id="time-sunday-june-14-6">3:45 PM - 4:45 PM</th>
+              <td class="activity-training">
+                <h3>RA Training
+		    Student Move In Procedures
+		</h3>
+		<p>
+		   217 Business Bldg.
+		   Holly Short, Doug Yeager, Kiley Foley
+		</p>
+              </td>
+            </tr>
+	    <tr>
+		<th scope="row" class="cell-meal" id="time-sunday-june-14-7">5:00 PM - 6:00 PM</th>
+		<td class="cell-meal">
+		   <h3>Dinner Simulated DHH</h3>
+		   <p>
+		      Findlay Commons 
+		      Nick Mastromatteo, Shasta Dreese
+     		   </p>
+		</td>
+	    </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="monday-june-15" aria-labelledby="heading-monday-june-15">
+        <h2 id="heading-monday-june-15">Monday June 15th</h2>
+        <table>
+          <caption>
+            Student Arrival Day
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Time</th>
+              <th scope="col">Activity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row" class="cell-meal" id="time-monday-june-15-1">
+                7:00AM–8:45AM
+              </th>
+              <td class="cell-meal">
+                <h3>RA Breakfast</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" id="time-monday-June-15-2">10:00AM–11:00AM</th>
+              <td
+                class="activity-admin"
+               
+              >
+                <h3>RAs: Finish Preparing for Student Arrival</h3>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-meal" id="time-monday-June-15-3">
+                11:00AM-11:30AM
+              </th>
+              <td class="cell-meal">
+                <h3>RA Lunch/Finish Prep for Student Arrival </h3>
+                <p>Location TBD</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-drop-off-belongings" id="time-monday-June-15-4">
+                1:00 PM – 2:00 PM
+              </th>
+              <td
+                class="cell-drop-off-belongings"
+               
+              >
+                <h3>Drop off Student’s Belongings at Dorm</h3>
+                <p>
+                  Parents should go to “Student Lot 82”, RAs will assist to
+                  unload student’s belongings into bins. Student’s belongings
+                  will be secure and locked in their dorm room until they
+                  arrive.
+                </p>
+                <p>
+                  <strong class="important-black-text"
+                    >***Medications should remain in the vehicle with parents
+                    and students***</strong
+                  >
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"
+                class="cell-student-arrival-important"
+                id="time-monday-June-15-5"
+              >
+                1:00 PM
+              </th>
+              <td
+                class="cell-student-arrival-important"
+               
+              >
+                <h3>Parent/Student Check-In Greeting &amp; Mingling</h3>
+                <p>Business Bldg. Atrium</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-medication-management" id="time-monday-June-15-6">
+                1:00 PM – 2:30 PM
+              </th>
+              <td
+                class="cell-medication-management"
+               
+              >
+                <h3>Check- In Station #1
+		    RN Medication Station
+		</h3>
+                <p>217 Business Bldg.
+		   Brightstar Staff
+		</p>
+                <h3>Check-In Station #2
+		    Student Pre-Test
+		</h3>
+		<p>215 Business Bldg. 
+		   Becky Knaub
+		</p>
+		<h3>Low Vision Interviews </h3>
+                <p>214 Business Bldg.</p>
+                <p>Emily Vasile, Michael Troilo</p>
+              </td>
+            </tr>
+            <tr class="cell-drop-off-belongings">
+              <!-- ADDED class for background color -->
+              <th scope="row" class="cell-drop-off-belongings" id="time-monday-June-15-7">
+                2:30 PM
+              </th>
+              <!-- ADDED class for background color -->
+              <td
+                class="cell-drop-off-belongings"
+               
+              >
+                <h3>Parents and Students say “Good-Bye”</h3>
+              </td>
+              <!-- ADDED class and h3 -->
+            </tr>
+            <tr>
+              <th scope="row" class="cell-student-welcome" id="time-monday-June-15-8">
+                2:30 PM – 3:00 PM
+              </th>
+              <td
+                class="cell-student-welcome"
+               
+              >
+                <h3>Student Welcome Meeting</h3>
+                <ul>
+                  <li>Student Rules and Procedures</li>
+                  <li>Student Introductions / Ice Breakers</li>
+                  <li>Schedule for Evening</li>
+                  <li>Snacks and Drinks</li>
+                </ul>
+               <p>217 Business Bldg.</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" id="time-monday-June-15-9">3:00 PM – 4:30 PM</th>
+              <td
+                class="activity-orientation"
+               
+              >
+                <h3>Travel as a Group to Stuart Hall</h3>
+                <ul>
+		    <li>Student Room Familiarization</li>
+		    <li>Unpacking</li>
+		    <li>Fire Evacuation Route with O&amp;Ms</li>
+		</ul>
+		<p>Holly Short, Doug Yeager, Jacki Morell, Mindy Miller</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-meal" id="time-monday-June-15-12">
+                5:00 PM – 6:15 PM
+              </th>
+              <td class="cell-meal">
+                <h3>Dinner</h3>
+                <p>Findlay Commons</p>
+                <p>O&amp;Ms: Holly Short, Doug Yeager, Jacki Morell, Mindy Miller
+ 		</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="activity-admin" id="time-monday-June-15-13">
+                6:30 PM – 8:00 PM
+              </th>
+              <!-- Changed from activity-evening -->
+              <td
+                class="activity-admin"
+               
+              >
+                <h3>Evening Team Building Activity K Towers</h3>
+              	<p>217 Business Bldg.</p>
+	      </td>
+              <!-- Changed from activity-evening -->
+            </tr>
+            <tr>
+              <th scope="row" class="activity-admin" id="time-monday-June-15-14">
+                8:00 PM – 8:45 PM
+              </th>
+              <!-- Changed from activity-evening -->
+              <td
+                class="activity-admin"
+               
+              >
+                <h3>Students Unpack / Complete Pre-Test</h3>
+                <p>Stuart Hall</p>
+              </td>
+              <!-- Changed from activity-evening -->
+            </tr>
+            <tr>
+              <th scope="row" class="activity-admin" id="time-monday-June-15-15">
+                9:00 PM – 10:30 PM
+              </th>
+              <!-- Changed from activity-evening -->
+              <td
+                class="activity-admin"
+               
+              >
+                <h3>Showers and Chill Time</h3>
+              </td>
+              <!-- Changed from activity-evening -->
+            </tr>
+            <tr>
+              <th scope="row" class="cell-lights-out" id="time-monday-June-15-16">
+                10:30 PM
+              </th>
+              <td
+                class="cell-lights-out"
+              >
+                <h3>Lights Out</h3>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="tuesday-june-16" aria-labelledby="heading-tuesday-june-16">
+        <h2 id="heading-tuesday-june-16">Tuesday June 16th</h2>
+        <table>
+          <caption>
+            Daily Schedule: Group A &amp; Group B
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Time</th>
+              <th scope="col">Group A</th>
+              <th scope="col">Group B</th>
+            </tr>
+          </thead>
+          <tbody>
+             <tr>
+		<th scope="row" id="time-tuesday-june-16-1">6:00 AM</th>
+		<td colspan="2">
+		<h3>Student Wake Up</h3>
+		</td>
+	     </tr>
+	     <tr>
+              <th scope="row" class="cell-meal" id="time-tuesday-june-16-2">
+                7:00 AM - 8:10 AM
+              </th>
+              <td
+                colspan="2"
+                class="cell-meal"
+               
+              >
+                <h3>Breakfast</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" id="time-tuesday-june-16-3">8:30 AM – 10:00 AM</th>
+              <td
+                class="activity-group-a"
+               
+              >
+                <h3>O&amp;M: Travel Tools</h3>
+                <p>
+                  217 Business Bldg.<br />Holly Short, Doug Yeager, Jackie Morell, Mindy Miller</p>
+              </td>
+              <td
+                class="activity-group-b"
+               
+              >
+                <h3>VRT: Navigating Adult Life</h3>
+                <p>215 Business Bldg.<br />Emily Vasile, Micheal Troilo, Jess Black, Amanda Whelan</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" id="time-tuesday-june-16-4">10:15 AM – 11:45 AM</th>
+              <td class="activity-group-a"
+		 >
+                <h3>
+                  VRT: Navigating Adult Life
+                </h3>
+                <p>215 Business Bldg.<br />Emily Vasile, Micheal Troilo, Jess Black, Amanda Whelan</p>
+              </td>
+	      <td class="activity-group-b" 
+	     >
+	      <h3> O&amp;M: Travel Tools</h3>
+	      <p>217 Business Bldg.<br />Holly Short, Doug Yeager, Jackie Morell, Mindy Miller
+</p>
+           </td>    
+	</tr>
+            <tr>
+              <th scope="row" class="cell-meal" id="time-tuesday-june-16-5">
+                12:00 PM – 1:15 PM
+              </th>
+              <td
+                class="cell-meal"
+                colspan="2"
+              >
+                <h3>Lunch</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" 
+		id="time-tuesday-june-16-6">1:30 PM – 3:00 PM</th>
+              <td
+               colspan="2"
+              >
+                <h3>Transition Planning: Preparing for Life after High School</h3>
+                <p>
+                  217 Business Bldg.<br/>
+		  Pia Smal, Deirdre O’Sullivan
+		</p>
+              </td>
+            </tr>
+           <tr>
+              <th scope="row" class="cell-ra-meeting" id="time-tuesday-june-16-6-ra">
+                2:00 PM - 3:00 PM
+              </th>
+              <td
+                class="cell-ra-meeting"
+                colspan="2"
+              >
+                <h3>RA Meeting:</h3>
+                <p>110 Business Building</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" id="time-tuesday-june-16-7">3:15 PM – 4:45 PM</th>
+              <td colspan="2">
+                <h3>Transition Planning: Career Inventory / Team Building</h3>
+                <p>
+                  217 Business Bldg.<br/>
+		  Emily Vasile, Micheal Troilo, Amanda Whelan, Doug Yeager, Jess Black, Jackie Morell<br/>
+		  (determine who and how many we need)
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-meal" id="time-tuesday-june-16-8">
+                5:00 PM - 6:00 PM
+              </th>
+              <td
+                colspan="2"
+                class="cell-meal"
+               
+              >
+                <h3>Dinner</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="activity-admin" id="time-tuesday-june-16-9">
+                6:30 PM - 8:00 PM
+              </th>
+              <!-- Changed from activity-evening -->
+              <td
+                colspan="2"
+                class="activity-admin"
+               
+              >
+                <h3>Evening Activity: Paint and Sip/Basketball/Volleyball</h3>
+                <p>
+                  Stuart Hall
+                </p>
+              </td>
+              <!-- Changed from activity-evening -->
+            </tr>
+            <tr>
+              <th scope="row" class="activity-admin" id="time-tuesday-june-16-10">
+                9:00 PM-10:30 PM
+              </th>
+              <!-- Changed from activity-evening -->
+              <td
+                colspan="2"
+                class="activity-admin"
+               
+              >
+                <h3>Showers and Chill Time</h3>
+              </td>
+              <!-- Changed from activity-evening -->
+            </tr>
+            <tr>
+              <th scope="row" class="cell-lights-out" id="time-tuesday-june-16-11">
+                10:30 PM
+              </th>
+              <td
+                colspan="2"
+                class="cell-lights-out"
+               
+              >
+                <h3>Lights Out</h3>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section
+        id="wednesday-june-17"
+        aria-labelledby="heading-wednesday-june-17"
+      >
+        <h2 id="heading-wednesday-june-17">Wednesday June 17th</h2>
+        <table>
+          <caption>
+            Daily Schedule: Group A &amp; Group B
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col" id="colhdr-wednesday-june-17-0">Time</th>
+              <th scope="col" id="colhdr-wednesday-june-17-1">Group A</th>
+              <th scope="col" id="colhdr-wednesday-june-17-2">Group B</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+	      <th scope="row" id="time-wednesday-june-17-1">6:00 AM
+	      </th>
+	      <td colspan="2">
+		<h3>Student Wake Up</h3>
+	      </td>
+	    </tr>
+	    <tr>
+              <th scope="row"
+                class="cell-meal"
+                id="time-wednesday-june-17-2"
+               
+              >
+                7:00 AM - 7:55 AM
+              </th>
+              <td
+                colspan="2"
+                class="cell-meal"
+               
+              >
+                <h3>Breakfast</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">8:15 AM – 10:00 AM</th>
+              <td class="activity-group-a">
+                <h3>O&amp;M: Routes</h3>
+                <p>
+                  217 Business Bldg<br />Holly Short, Jackie Morell, Doug Yeager
+                </p>
+              </td>
+              <td class="activity-group-b">
+                <h3>VRT: Dining Out</h3>
+                <p>
+                  Prep for Dining Out<br />215 Business Bldg.<br />Emily
+                  Vasile, Michael Troilo, Amanda Whelan, Jess Black
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">10:15 AM – 12:00 PM</th>
+              <td class="activity-group-a">
+                <h3>VRT: Dining Out</h3>
+                <p>
+                  Prep for Dining Out<br />215 Business Bldg.<br />Emily
+                  Vasile, Michael Troilo, Amanda Whelan, Jess Black
+                </p>
+              </td>
+	      <td class="activity-group-b">
+		<h3>O&amp;M: Routes</h3>
+                <p>
+                  217 Business Bldg<br />Holly Short, Jackie Morell, Doug Yeager
+                </p>
+	      </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-meal">12:15 PM – 1:30 PM</th>
+              <td colspan="2" class="cell-meal">
+                <h3>Lunch</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">1:45 PM – 3:15 PM</th>
+              <td colspan="2">
+                <h3>Transition Planning: Unlocking Your Career Code</h3>
+		  <p>217 Business Bldg.<br/>Pia Smal, Deirdre O’Sullivan </p>  
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-ra-meeting">2:00 PM - 3:00 PM</th>
+              <td colspan="2" class="cell-ra-meeting">
+                <h3>RA Meeting</h3>
+                <p>110 Business Building Auditorium</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">3:30 PM – 5:00 PM</th>
+              <td colspan="2">
+                <h3>
+                  Transition Planning: Transition Talk Panel
+                </h3>
+                <p>
+                  210 Business Bldg. Auditorium<br/>
+		  Pia Smal, Deirdre O’Sullivan, Holly Short, Amanda Whelan, Emily Vasile 
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-meal">5:15 PM - 6:15 PM</th>
+              <td colspan="2" class="cell-meal">
+                <h3>Dinner</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="activity-admin">6:30 PM - 9:00 PM</th>
+              <td colspan="2">
+                <h3>Evening Activity: Make your own Tote Bag or Unstructured Time</h3>
+                <p>
+                  Stuart Hall
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">9:00 PM - 10:30 PM</th>
+              <td colspan="2">
+                <h3>Showers and CHill Time</h3>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-lights-out">10:30 PM</th>
+              <td colspan="2" class="cell-lights-out"><h3>Lights Out</h3></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="thursday-june-18" aria-labelledby="heading-thursday-june-18">
+        <h2 id="heading-thursday-june-18">Thursday June 18th</h2>
+        <table>
+          <caption>
+            Daily Schedule: Groups A1, A2, B1, and B2
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col" id="colhdr-thursday-june-18-0">Time</th>
+              <th scope="col" id="colhdr-thursday-june-18-1">Group A1</th>
+              <th scope="col" id="colhdr-thursday-june-18-2">Group A2</th>
+              <th scope="col" id="colhdr-thursday-june-18-3">Group B1</th>
+              <th scope="col" id="colhdr-thursday-june-18-4">Group B2</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+	      <th scope="row" id="time-thursday-june-18-1">6:00 AM 
+	      </th>
+	      <td colspan="4"
+	>
+		<h3>Student Wake Up</h3>
+	      </td>
+	    </tr>
+	    <tr>
+              <th scope="row" class="cell-meal" id="time-thursday-june-18-2">
+                7:00 AM - 7:55 AM
+              </th>
+              <td
+                colspan="4"
+                class="cell-meal"
+               
+              >
+                <h3>Breakfast</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" id="time-thursday-june-18-3">8:15 AM – 9:00 AM</th>
+              <td
+		colspan="4"
+               
+              >
+                <h3>O&amp;M: CATA</h3>
+                <p>
+                  217 Business Bldg.<br />Centre Area Transit Authority (CATA) Staff<br/>Holly Short, Doug Yaeger, Jackie Morell
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" id="time-thursday-june-18-4">9:30 AM – 11:30 AM</th>
+              <td
+                	colspan="4"
+	 
+              >
+                <h3>Transition Planning: Symposium and Resource Fair</h3>
+                <p>214, 215, 217 Business Bldg</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-meal" id="time-thursday-june-18-5">
+                11:45 AM – 1:15 PM
+              </th>
+              <td
+                colspan="4"
+                class="cell-meal"
+               
+              >
+                <h3>Lunch</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" id="time-thursday-june-18-6">1:30 PM – 3:15 PM</th>
+              <td
+                colspan="2"
+                class="activity-group-a1 activity-group-a2"
+               
+              >
+                <h3>O&amp;M: Transit Trek – Navigating Public Transportation</h3>
+                <p>
+                  Location: TBD<br />Holly Short, Jodi Cox, Jackie Morell
+                </p>
+              </td>
+              <td
+		class="activity-group-b1"
+               
+              >
+                <h3>AT Assessments</h3>
+                <p>
+                  215 Business Bldg.<br />Doug Williams, Scott Dougherty,
+                  Amanda Whelan, Doug Yeager, Greg Lazur?
+                </p>
+              </td>
+              <td
+		class="activity-group-b2"
+               
+              >
+                <h3>VRT: Cooking</h3>
+                <p>Stuart Hall<br />Emily Vasile, Michael Troilo, Jess Black</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" id="time-thursday-june-18-7">3:30 PM – 5:15 PM</th>
+              <td
+                class="activity-group-a1 activity-group-a2"
+                colspan="2"
+               
+              >
+                <h3>
+                  O&amp;M: Transit Trek – Navigating Public Transportation
+                  (Continued)
+                </h3>
+                <p>
+                  Location: TBD<br />Holly Short, Jodi Cox, Jackie Morell
+                </p>
+              </td>
+              <td
+		class="activity-group-b1"
+               
+              >
+                <h3>VRT: Cooking</h3>
+                <p>Stuart Hall<br />Emily Vasile, Michael Troilo, Jess Black</p>
+              </td>
+              <td
+		class="activity-group-b2"
+               
+              >
+                <h3>AT Assessments</h3>
+                <p>
+                  215 Business Bldg.<br />Doug Williams, Scott Dougherty,
+                  Amanda Whelan, Doug Yeager, Greg Lazur?
+                </p>
+              </td>
+            </tr>
+	    <tr>
+	      <th scope="row" class="cell-drop-off-belongings" id="time-thursday-june-18-8">
+		4:30 PM - 6:30 PM
+	      </th>
+	      <td colspan="4" class="cell-drop-off-belongings">
+	      <h3>Salus Interns Arrive</h3>
+	      </td>
+	    </tr>
+            <tr>
+              <th scope="row" class="cell-meal" id="time-thursday-june-18-9">
+                5:30 PM – 6:30 PM
+              </th>
+              <td
+                colspan="4"
+                class="cell-meal"
+               
+              >
+                <h3>Dinner</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="activity-admin" id="time-thursday-june-18-10">
+                6:45 PM – 8:45 PM
+              </th>
+              <td
+                colspan="4"
+                class="activity-admin"
+               
+              >
+                <h3>Evening Activity: Optional O&amp;M Night Lesson: Walking in the Dark</h3>
+                <p>TBD<br />Holly Short, Jacki Morell, Jodi Cox</p>
+              </td>
+            </tr>
+	    <tr>
+              <th scope="row" class="activity-admin" id="time-thursday-june-18-10b">
+                6:45 PM – 8:45 PM
+              </th>
+              <td
+                colspan="4"
+                class="activity-admin"
+               
+              >
+                <h3>Evening Activity: Finish Crafts from Prior Nights/Video Games/ Unstructured Time</h3>
+                <p>Stuart Hall</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="activity-admin" id="time-thursday-june-18-11">
+                9:00 PM - 10:30 PM
+              </th>
+              <td
+                colspan="4"
+                class="activity-admin"
+               
+              >
+                <h3>Showers and Chill Time</h3>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-lights-out" id="time-thursday-june-18-12">
+                10:30 PM
+              </th>
+              <td
+                colspan="4"
+                class="cell-lights-out"
+               
+              >
+                <h3>Lights Out</h3>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="friday-june-19" aria-labelledby="heading-friday-june-19">
+        <h2 id="heading-friday-june-19">Friday June 19th</h2>
+        <table>
+          <caption>
+            Daily Schedule: Groups A1, A2, and B
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col" id="colhdr-friday-june-19-0">Time</th>
+              <th scope="col" id="colhdr-friday-june-19-1">Group A1</th>
+              <th scope="col" id="colhdr-friday-june-19-2">Group A2</th>
+              <th scope="col" id="colhdr-friday-june-19-3">Group B</th>
+              </tr>
+          </thead>
+          <tbody>
+	    <tr>
+	      <th scope="row" id="time-friday-june-19-1"
+		 >6:00 AM 
+	      </th>
+	      <td colspan="3"
+		 
+		>
+		<h3>Student Wake Up</h3>
+	      </td>
+            </tr>
+            <tr>
+              <th scope="row"
+                class="cell-meal"
+                id="time-friday-june-19-2"
+               
+              >
+                7:00 AM - 8:00 AM
+              </th>
+              <td
+                colspan="3"
+                class="cell-meal"
+               
+              >
+                <h3>Breakfast</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"
+                id="time-friday-june-19-3"
+               
+              >
+                8:15 AM – 10:00 AM
+              </th>
+              <td
+                class="activity-group-a1"
+               
+              >
+                <h3>VRT: Cooking</h3>
+                <p>
+                  Stuart Hall<br />Emily Vasile, Micheal Troilo, Jess Black
+                </p>
+              </td>
+              <td
+                class="activity-group-a2"
+               
+              >
+                <h3>AT: Assessment</h3>
+                <p>
+                  215 Business Building<br />Doug Williams, Scott Dougherty,
+                  Amanda Whelan, Doug Yeager
+                </p>
+              </td>
+	      <td class="activity-group-b"
+               >
+		<h3>O&amp;M: Transit Trek </h3>
+		  <p>Location: TBD<br />Holly Short, Jacki Morell, Jodi Cox</p>
+	      </td>
+            </tr>
+            <tr>
+              <th scope="row"
+                id="time-friday-june-19-4"
+               
+              >
+                10:15 AM – 12:00 PM
+              </th>
+              <td
+                class="activity-group-a1"
+               
+              >
+                <h3>AT: Assessment</h3>
+                <p>
+                  215 Business Building<br />Doug Williams, Scott Dougherty,
+                  Amanda Whelan, Doug Yeager
+                </p>
+              </td>
+              <td
+                class="activity-group-a2"
+               
+              >
+                <h3>VRT: Cooking</h3>
+                <p>
+                  Stuart Hall<br />Emily Vasile, Micheal Troilo, Jess Black
+                </p>
+              </td>
+              <td
+                class="activity-group-b"
+               
+              >
+                <h3>O&amp;M: Transit Trek Continued</h3>
+                <p>
+                  Location: TBD<br />Holly Short, Jacki Morell, Jodi Cox
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"
+                class="cell-meal"
+                id="time-friday-june-19-5"
+               
+              >
+                12:15 PM – 1:15 PM
+              </th>
+              <td
+                colspan="3"
+                class="cell-meal"
+               
+              >
+                <h3>Lunch</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"
+                id="time-friday-june-19-6"
+               
+              >
+                1:30 PM – 3:00 PM
+              </th>
+              <td
+                class="activity-group-a"
+                colspan="2"
+	
+              >
+                <h3>AT: Digital Materials</h3>
+                <p>
+                  215 Business Bldg.<br/>Doug Williams, Scott Dougherty, Amanda Whelan
+                </p>
+              </td>
+              <td
+                class="activity-group-b"
+	
+              >
+                <h3>LV: Eye Anatomy and Glare Control</h3>
+                <p>
+                  217 Business Bldg.<br />Emily Vasile, Kerry Lueders
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"
+                class="cell-ra-meeting"
+                id="time-friday-june-19-7"
+               
+              >
+                2:00 PM - 3:00 PM
+              </th>
+              <td
+                colspan="3"
+                class="cell-ra-meeting"
+               
+              >
+                <h3>RA Meeting</h3>
+                <p>110 Business Building Auditorium</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"
+                id="time-friday-june-19-8"
+               
+              >
+                3:15 PM – 4:45 PM
+              </th>
+              <td
+                class="activity-group-a"
+                colspan="2"
+               
+              >
+                <h3>LV: Eye Anatomy and Glare Control</h3>
+                <p>
+                  217 Business Bldg.<br/>Kerry Lueders, Emily Vasile
+                </p>
+              </td>
+              <td
+                class="activity-group-b"
+               
+              >
+                <h3>AT: Digital Materials </h3>
+                <p>
+                215 Business Bldg.<br/>Doug Williams, Scott Dougherty, Amanda Whelan
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"
+                class="cell-meal"
+                id="time-friday-june-19-9"
+               
+              >
+                5:00 PM – 8:00 PM
+              </th>
+              <td
+                colspan="3"
+                class="cell-meal"
+               
+              >
+                <h3>Dining Out</h3>
+                <p>
+                  Brothers Bar and Grill – Allen Street<br/>Holly Short, Jodi Cox, Jacki Morell 
+                </p>
+              </td>
+            </tr>
+	    <tr>
+	     <th scope="row" id="time-friday-june-19-10">
+		8:00 PM - 9:00 PM
+	     </th>
+	     <td colspan="3">
+		<h3>Return to Dorms/Low Vision Night Glare Assessment</h3>
+		<p>Stuart Hall<br/>Kerry Lueders, Emily Vasile</p>
+	     </td>
+	    </tr>
+            <tr>
+              <th scope="row" class="activity-admin" id="time-friday-june-19-10b">
+                8:00 PM - 9:00 PM
+              </th>
+              <td
+                colspan="3"
+                class="activity-admin"
+               
+              >
+                <h3>Evening Activity: Finish Crafts from Prior Nights/Board Games/Unstructured Time</h3>
+                <p>Stuart Hall</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"
+                class="activity-admin"
+                id="time-friday-june-19-11"
+               
+              >
+                9:00 PM - 10:30 PM
+              </th>
+              <td
+                colspan="3"
+                class="activity-admin"
+               
+              >
+                <h3>Showers and Chill Time</h3>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"
+                class="cell-lights-out"
+                id="time-friday-june-19-12"
+               
+              >
+                10:30 PM
+              </th>
+              <td
+                colspan="3"
+                class="cell-lights-out"
+               
+              >
+                <h3>Lights Out</h3>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="saturday-june-20" aria-labelledby="heading-saturday-june-20">
+        <h2 id="heading-saturday-june-20">Saturday June 20th</h2>
+        <table>
+          <caption>
+            Daily Schedule: Group A &amp; Group B
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Time</th>
+              <th scope="col">Group A</th>
+              <th scope="col">Group B</th>
+            </tr>
+          </thead>
+          <tbody>
+           <tr>
+	     <th scope="row">
+		6:00 AM
+	     </th>
+	     <td colspan="2">
+		<h3>Student Wake Up</h3>
+	     </td>
+	   </tr> 
+	   <tr>
+              <th scope="row" class="cell-meal">7:00 AM - 7:55 AM</th>
+              <td colspan="2" class="cell-meal">
+                <h3>Breakfast</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">8:15 AM – 9:45 AM</th>
+              <td class="activity-group-a activity-weekend">
+                <h3>VRT: Laundry</h3>
+                <p>Stuart Hall</p>
+                <p>Emily Vasile, Michael Troilo, Holly Short</p>
+              </td>
+              <td class="activity-group-b activity-weekend">
+                <h3>AT AI Class</h3>
+                <p>215 Business Bldg.<br/>Doug Williams, Amanda Whelan, Scott Dougherty</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">10:00 AM – 11:30 AM</th>
+              <td class="activity-group-a">
+                <h3>AT AI Class</h3>
+                <p>215 Business Bldg.<br/>Doug Williams, Amanda Whelan, Scott Dougherty</p>
+              </td>
+              <td class="activity-group-b">
+                <h3>VRT: Laundry</h3>
+                <p>Stuart Hall</p>
+                <p>Emily Vasile, Michael Troilo, Holly Short</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-meal">12:15 AM – 1:15 PM</th>
+              <td colspan="2" class="cell-meal">
+                <h3>Lunch</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">1:30 PM – 3:00 PM</th>
+              <td 
+              colspan="2">
+              <h3>Transition Planning</h3>
+                <p>Business Bldg. 217<br/>Pia Smal, Deridre O’Sullivan</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-ra-meeting">2:00 PM – 2:30 PM</th>
+              <td colspan="2" class="cell-ra-meeting">
+                <h3>RA Meeting</h3>
+                <p>110 Business Building Auditorium</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">3:15 PM – 4:45 PM</th>
+              <td colspan="2" class="activity-group-a activity-weekend">
+                <h3>O&amp;M Scavenger Hunt</h3>
+                <p>Holly Short, Jodi Cox, Mindy Miller Doug Williams, Scott Dougherty</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-meal">5:00 PM – 6:00 PM</th>
+              <td colspan="2" class="cell-meal">
+                <h3>Dinner</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="activity-weekend">6:30 PM – 9:00 PM</th>
+              <td colspan="2" class="activity-weekend">
+                <h3>Summer Academy Carnival</h3>
+		<p>Business Bldg. Atrium </p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="activity-weekend">9:00 PM – 10:30 PM</th>
+              <td colspan="2" class="activity-weekend activity-orientation">
+                <h3>Showers and Chill Time</h3>
+                <p>Stuart Hall</p>
+            </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-lights-out">10:30 PM</th>
+              <td colspan="2" class="cell-lights-out"><h3>Lights Out</h3></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="sunday-june-21" aria-labelledby="heading-sunday-june-21">
+        <h2 id="heading-sunday-june-21">Sunday June 21st</h2>
+        <table>
+          <caption>
+            Weekend Schedule
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col" id="colhdr-sunday-june-21-0">Time</th>
+              <th scope="col" id="colhdr-sunday-june-21-1" colspan="3">
+                Activity
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">
+                6:00 AM
+              </th>
+              <td
+              colspan="3">
+                <h3>Student Wake Up</h3>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"
+                class="cell-meal"
+                id="time-sunday-june-21-1"
+               
+              >
+                7:00 AM - 7:55 AM
+              </th>
+              <td
+                class="cell-meal"
+                colspan="3"
+               
+              >
+                <h3>Breakfast</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"
+                class="activity-weekend"
+                id="time-sunday-june-21-2"
+               
+              >
+                8:15 AM - 9:45 AM
+              </th>
+              <td
+                class="activity-weekend"
+                colspan="3"
+               
+              >
+                <h3>AT Post Test</h3>
+                <p>
+                  217 Business Bldg.<br/>Scott Dougherty, Doug Williams
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">
+                10:15 AM - 12:45 PM
+              </th>
+              <td colspan="3">
+                <h3>Tour of Beaver Stadium</h3>
+                <p>Donation Event</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-meal">
+                1:15 PM - 2:15 PM
+              </th>
+              <td colspan="3" class="cell-meal">
+                <h3>Catered Lunch</h3>
+                <p>IM Building</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">
+                2:15 PM - 6:00 PM
+              </th>
+              <td colspan="3">
+                <h3>Rock Climbing and Foam Archery</h3>
+                <p>IM Building<br/>Penn State Rec Staff</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"
+                class="cell-meal"
+                id="time-sunday-june-21-5"
+               
+              >
+                6:00 PM - 7:00 PM
+              </th>
+              <td
+                class="cell-meal"
+                colspan="3"
+               
+              >
+                <h3>Dinner</h3>
+                <p>Findlay Commons</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"
+                class="activity-weekend"
+                id="time-sunday-june-21-6"
+               
+              >
+                7:00 PM - 9:00 PM
+              </th>
+              <td
+                class="activity-weekend"
+                colspan="3"
+               
+              >
+                <h3>Movie Night</h3>
+                <p>110 Business Bldg. Auditorium</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"
+                class="activity-weekend"
+                id="time-sunday-june-21-7"
+               
+              >
+                9:00 PM - 10:30 PM
+              </th>
+              <td
+                class="activity-weekend"
+                colspan="3"
+               
+              >
+                <h3>Showers and Chill Time</h3>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"
+                class="cell-lights-out"
+                id="time-sunday-june-21-8"
+               
+              >
+                10:30 PM
+              </th>
+              <td
+                class="cell-lights-out"
+                colspan="3"
+               
+              >
+                <h3>Lights Out</h3>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="monday-june-22" aria-labelledby="heading-monday-june-22">
+        <h2 id="heading-monday-june-22">Monday June 22nd</h2>
+        <table>
+          <caption>
+            BVI Student Departure Day
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Time</th>
+              <th scope="col">Activity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row" class="activity-admin">6:30 AM</th>
+              <td class="activity-admin"><h3>Wake up</h3></td>
+            </tr>
+            <tr>
+              <th scope="row" class="activity-admin">7:00 AM - 8:00 AM</th>
+              <td class="activity-admin">
+                <h3>Students Finish Packing, Get Bins to Lobby</h3>
+                <p>Stuart Hall</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="cell-meal">8:15 AM - 9:15 AM</th>
+              <td class="cell-meal">
+                <h3>Breakfast</h3>
+                <p>Findlay Commons</p>
+                <p><strong>packed up by nursing staff</strong></p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="activity-admin">9:15 AM - 11:00 AM</th>
+              <td class="activity-admin">
+                <h3>Students Reflect/Sign Shirts Until Parents Arrive</h3>
+                <p>Stuart Hall Lobby</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="activity-admin">9:30 AM - 11:00 AM</th>
+              <td class="activity-admin">
+                <h3>Parents Travel/ Arrive at Student Lot 82</h3>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="activity-admin">9:30 AM - 11:00 AM</th>
+              <td class="activity-admin">
+                <h3>Check-Out Stations</h3>
+                <h4>Table/Tent #1</h4>
+                <p>Medication Return with RN<br/>BrightStar Staff</p>
+                <h4>Table/Tent #2</h4>
+                <p>Check-Out Procedures<br/>Kiley Foley</p>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="activity-admin">11:00 AM</th>
+              <td class="text-departure-alert">
+                <h3>
+                  <strong>ALL BVI STUDENTS MUST BE PICKED UP NO LATER THAN 11:00 AM</strong>
+                </h3>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="activity-admin">11:00 AM - 2:00 PM</th>
+              <td class="activity-admin">
+                <h3>All Staff Break</h3>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const joinLabels = (labels) => {
+          if (labels.length <= 1) return labels[0] || "";
+          if (labels.length === 2) return labels.join(" and ");
+          return `${labels.slice(0, -1).join(", ")}, and ${labels.at(-1)}`;
+        };
+
+        document.querySelectorAll("table").forEach((table) => {
+          const columnHeaders = Array.from(
+            table.querySelectorAll("thead th[scope='col']")
+          ).map((header) => header.textContent.trim().replace(/\s+/g, " "));
+
+          if (columnHeaders.length === 0) return;
+
+          table.querySelectorAll("tbody tr").forEach((row) => {
+            let columnIndex = 0;
+
+            Array.from(row.children).forEach((cell, cellIndex) => {
+              const span = Number(cell.getAttribute("colspan") || 1);
+
+              if (cellIndex > 0 && !cell.querySelector(".mobile-cell-label")) {
+                const labelText = joinLabels(
+                  columnHeaders.slice(columnIndex, columnIndex + span)
+                );
+
+                if (labelText) {
+                  const label = document.createElement("span");
+                  label.className = "mobile-cell-label";
+                  label.setAttribute("aria-hidden", "true");
+                  label.textContent = `${labelText}: `;
+                  cell.prepend(label);
+                }
+              }
+
+              columnIndex += span;
+            });
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

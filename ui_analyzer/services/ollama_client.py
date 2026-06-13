@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from typing import Generator, Optional
 from ui_analyzer.services.ai_client import AIClient
 import httpx
 
@@ -74,17 +75,44 @@ def best_model_for_filetype(installed: list[str], file_type_label: str) -> Optio
 
 # ── OllamaClient ─────────────────────────────────────────────────────────────
 
+def _ipv4_fallback(base_url: str) -> str:
+    """Return a 127.0.0.1-based URL if base_url uses 'localhost'.
+
+    On macOS, 'localhost' may resolve to ::1 (IPv6) first, which fails when
+    Ollama only listens on 127.0.0.1 (IPv4).  Mirrored from LyraScan
+    feature/localhost withIPv4Fallback.  Only the host is swapped; the
+    scheme, port, and path are preserved.
+    """
+    if "localhost" in base_url:
+        return base_url.replace("localhost", "127.0.0.1", 1)
+    return base_url
+
+
 class OllamaClient(AIClient):
     def __init__(self, base_url: str, timeout: float = 120.0) -> None:
         self._base = base_url.rstrip("/")
         self._timeout = timeout
 
     def is_available(self) -> bool:
+        """Check connectivity, auto-resolving localhost → 127.0.0.1 if needed."""
         try:
             r = httpx.get(f"{self._base}/api/tags", timeout=3.0)
-            return r.status_code == 200
+            if r.status_code == 200:
+                return True
+        except (httpx.ConnectError, httpx.NetworkError, httpx.TimeoutException):
+            # IPv4 fallback: if localhost fails, retry with 127.0.0.1
+            fallback = _ipv4_fallback(self._base)
+            if fallback != self._base:
+                try:
+                    r = httpx.get(f"{fallback}/api/tags", timeout=3.0)
+                    if r.status_code == 200:
+                        self._base = fallback  # persist for future calls
+                        return True
+                except Exception:
+                    pass
         except Exception:
-            return False
+            pass
+        return False
 
     def list_models(self) -> list[dict]:
         """Return list of installed models with enriched metadata."""

@@ -6,6 +6,7 @@ from typing import Optional
 
 from ui_analyzer.services.config_manager import ConfigManager
 from ui_analyzer.services.ollama_client import OllamaClient
+from ui_analyzer.services.localhost_crawler import CrawlConfig
 
 class SettingsDialog(wx.Dialog):
     """Dialog for managing AI provider settings and API keys."""
@@ -14,10 +15,11 @@ class SettingsDialog(wx.Dialog):
         super().__init__(
             parent,
             title="Settings",
-            size=(480, 520),
+            size=(480, 580),
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
         )
         self._config = config
+        self._crawl_config = CrawlConfig.from_dict(config.get_crawl_config())
         self._build_ui()
         self._update_model_list()
         self.CentreOnParent()
@@ -40,6 +42,10 @@ class SettingsDialog(wx.Dialog):
         # Tab 3: Cloud Providers
         self._tab_cloud = self._build_cloud_tab()
         self._notebook.AddPage(self._tab_cloud, "Cloud Providers")
+
+        # Tab 4: Crawler
+        self._tab_crawler = self._build_crawler_tab()
+        self._notebook.AddPage(self._tab_crawler, "Crawler")
 
         sizer.Add(self._notebook, 1, wx.EXPAND | wx.ALL, 12)
 
@@ -169,12 +175,76 @@ class SettingsDialog(wx.Dialog):
         panel.SetSizer(sizer)
         return panel
 
+    def _build_crawler_tab(self) -> wx.Panel:
+        panel = wx.Panel(self._notebook)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        header = wx.StaticText(panel, label="Localhost Site Crawler")
+        header.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+        sizer.Add(header, 0, wx.TOP | wx.LEFT, 12)
+
+        desc = wx.StaticText(
+            panel,
+            label=(
+                "Controls how many pages are visited when you use "
+                "File → Crawl Localhost Site… (Ctrl+Shift+W). "
+                "Increase limits for larger sites; increase the pause for slower servers."
+            ),
+        )
+        desc.Wrap(420)
+        sizer.Add(desc, 0, wx.ALL, 8)
+        sizer.Add(wx.StaticLine(panel), 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 8)
+
+        grid = wx.FlexGridSizer(cols=2, vgap=10, hgap=12)
+        grid.AddGrowableCol(1, 1)
+
+        # Max pages
+        grid.Add(wx.StaticText(panel, label="Max pages:"), 0, wx.ALIGN_CENTER_VERTICAL)
+        self._crawl_pages_spin = wx.SpinCtrl(
+            panel, value=str(self._crawl_config.max_pages),
+            min=1, max=200, size=(90, -1),
+        )
+        self._crawl_pages_spin.SetName("Maximum pages to crawl")
+        self._crawl_pages_spin.SetToolTip("Stop after this many pages (1–200)")
+        grid.Add(self._crawl_pages_spin, 0)
+
+        # Max depth
+        grid.Add(wx.StaticText(panel, label="Max depth:"), 0, wx.ALIGN_CENTER_VERTICAL)
+        self._crawl_depth_spin = wx.SpinCtrl(
+            panel, value=str(self._crawl_config.max_depth),
+            min=1, max=5, size=(90, -1),
+        )
+        self._crawl_depth_spin.SetName("Maximum crawl depth")
+        self._crawl_depth_spin.SetToolTip("Link levels to follow from the start page (1–5)")
+        grid.Add(self._crawl_depth_spin, 0)
+
+        # Pause between pages
+        grid.Add(wx.StaticText(panel, label="Pause between pages (s):"), 0, wx.ALIGN_CENTER_VERTICAL)
+        self._crawl_wait_spin = wx.SpinCtrlDouble(
+            panel, value=f"{self._crawl_config.wait_seconds:.1f}",
+            min=0.0, max=5.0, inc=0.5, size=(90, -1),
+        )
+        self._crawl_wait_spin.SetDigits(1)
+        self._crawl_wait_spin.SetName("Pause between page fetches in seconds")
+        self._crawl_wait_spin.SetToolTip("Brief pause after each page load (0–5 s)")
+        grid.Add(self._crawl_wait_spin, 0)
+
+        sizer.Add(grid, 0, wx.ALL, 12)
+
+        panel.SetSizer(sizer)
+        return panel
+
     def _on_ok(self, event: wx.CommandEvent) -> None:
         """Flush all pending field values to config before closing."""
         self._config.set("ollama_url", self._url_field.GetValue().strip())
         model = self._model_choice.GetStringSelection()
         if model:
             self._config.set("model", model)
+        # Save crawl config
+        self._crawl_config.max_pages    = self._crawl_pages_spin.GetValue()
+        self._crawl_config.max_depth    = self._crawl_depth_spin.GetValue()
+        self._crawl_config.wait_seconds = self._crawl_wait_spin.GetValue()
+        self._config.set_crawl_config(self._crawl_config.to_dict())
         event.Skip()  # let the default OK handler close the dialog
 
     def _on_provider_changed(self, _e) -> None:

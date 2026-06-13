@@ -26,6 +26,10 @@ except ImportError:
     _HAS_ACCESSIBLE_WV = False
 from ui_analyzer.views.model_picker import ModelPickerDialog
 from ui_analyzer.views.settings_dialog import SettingsDialog
+from ui_analyzer.views.crawl_dialog import CrawlDialog
+from ui_analyzer.services.localhost_crawler import (
+    CrawlConfig, LocalhostCrawler, save_crawl_to_temp,
+)
 
 _APP_NAME    = "UI Analyzer"
 _DEFAULT_W   = 1100
@@ -42,6 +46,8 @@ _ID_SAVE          = wx.NewIdRef()
 _ID_MODEL_PICKER  = wx.NewIdRef()
 _ID_SETTINGS      = wx.NewIdRef()
 _ID_VALIDATE      = wx.NewIdRef()
+_ID_CRAWL         = wx.NewIdRef()
+_ID_CANCEL_CRAWL  = wx.NewIdRef()
 
 
 class MainFrame(wx.Frame):
@@ -68,6 +74,8 @@ class MainFrame(wx.Frame):
         self._current_file: Optional[UIFile] = None
         self._files: list[UIFile] = []
         self._context_cancel  = False
+        self._crawler: Optional[LocalhostCrawler] = None
+        self._crawl_config = CrawlConfig.from_dict(self._config.get_crawl_config())
 
         self._build_ui()
         self._build_menu()
@@ -124,6 +132,8 @@ class MainFrame(wx.Frame):
         file_menu = wx.Menu()
         file_menu.Append(_ID_OPEN_FOLDER, "Open Folder…\tCtrl+O",
                           "Open a folder of UI source files")
+        file_menu.Append(_ID_CRAWL, "Crawl Localhost Site…\tCtrl+Shift+W",
+                          "Visit a running local web app page by page and add each page to the sidebar")
         file_menu.AppendSeparator()
         file_menu.Append(_ID_MODEL_PICKER, "Choose AI Model…\tCtrl+M",
                           "Select which Ollama model to use")
@@ -159,6 +169,7 @@ class MainFrame(wx.Frame):
 
         # Bind menu events
         self.Bind(wx.EVT_MENU, lambda _e: self._open_folder_dialog(),  id=_ID_OPEN_FOLDER)
+        self.Bind(wx.EVT_MENU, lambda _e: self._open_crawl_dialog(),  id=_ID_CRAWL)
         self.Bind(wx.EVT_MENU, lambda _e: self._trigger_analyze(),     id=_ID_ANALYZE)
         self.Bind(wx.EVT_MENU, lambda _e: self._trigger_validate(),   id=_ID_VALIDATE)
         self.Bind(wx.EVT_MENU, lambda _e: self._build_project_context(), id=_ID_BUILD_CONTEXT)
@@ -175,6 +186,7 @@ class MainFrame(wx.Frame):
         # those same shortcuts when the WebView has keyboard focus.
         accel_entries = [
             wx.AcceleratorEntry(wx.ACCEL_CTRL, ord("O"), _ID_OPEN_FOLDER),
+            wx.AcceleratorEntry(wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("W"), _ID_CRAWL),
             wx.AcceleratorEntry(wx.ACCEL_CTRL, ord("R"), _ID_ANALYZE),
             wx.AcceleratorEntry(wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("V"), _ID_VALIDATE),
             wx.AcceleratorEntry(wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("A"), _ID_BUILD_CONTEXT),
@@ -211,6 +223,14 @@ class MainFrame(wx.Frame):
             return
         if cmd and shift and key == ord("S"):
             self._save_output()
+            return
+        if cmd and shift and key == ord("W"):
+            self._open_crawl_dialog()
+            return
+        # Escape cancels an active crawl
+        if key == wx.WXK_ESCAPE and self._crawler is not None:
+            self._crawler.cancel()
+            self._status.SetStatusText("Cancelling crawl…")
             return
         event.Skip()
 
@@ -313,6 +333,100 @@ class MainFrame(wx.Frame):
             wx.CallAfter(self._on_scan_complete, files)
 
         threading.Thread(target=do_scan, daemon=True).start()
+
+    # ── Localhost crawler ─────────────────────────────────────────────────────
+
+    def _open_crawl_dialog(self) -> None:
+        dlg = CrawlDialog(self, self._crawl_config)
+        if dlg.ShowModal() != wx.ID_OK:
+            dlg.Destroy()
+            return
+        url = dlg.url
+        self._crawl_config = dlg.config
+        self._config.set_crawl_config(self._crawl_config.to_dict())
+        dlg.Destroy()
+        self._start_crawl(url)
+
+    def _start_crawl(self, start_url: str) -> None:
+        if self._crawler is not None:
+            wx.MessageBox(
+                "A crawl is already in progress. Wait for it to finish or restart the app.",
+                "Crawl in Progress",
+                wx.OK | wx.ICON_INFORMATION,
+                self,
+            )
+            return
+
+        self._crawler = LocalhostCrawler(self._crawl_config)
+        self._status.SetStatusText(f"Crawling {start_url}…")
+
+        notify = wx.adv.NotificationMessage(
+            "UI Analyzer", f"Crawling {start_url} — Escape to cancel"
+        )
+        try:
+            notify.Show(timeout=0)
+        except Exception:
+            pass
+
+        def on_progress(visited: int, total: int, url: str) -> None:
+            wx.CallAfter(
+                self._status.SetStatusText,
+                f"Crawling: {visited}/{total} pages — {url}",
+            )
+
+        self._crawler.on_progress = on_progress
+
+        def do_crawl() -> None:
+            assert self._crawler is not None
+            pages = self._crawler.crawl(start_url)
+            cancelled = self._crawler.is_cancelled
+            wx.CallAfter(self._on_crawl_complete, pages, start_url, cancelled)
+
+        threading.Thread(target=do_crawl, daemon=True).start()
+
+    def _on_crawl_complete(
+        self,
+        pages: list,
+        start_url: str,
+        cancelled: bool,
+    ) -> None:
+        self._crawler = None
+        count = len(pages)
+
+        if count == 0:
+            msg = (
+                f"No pages were crawled from {start_url}.\n\n"
+                "Make sure the server is running and the URL is correct."
+            )
+            wx.MessageBox(msg, "Crawl Result", wx.OK | wx.ICON_WARNING, self)
+            self._status.SetStatusText("Crawl complete — no pages found")
+            return
+
+        # Save pages to temp dir and scan it
+        crawl_dir = save_crawl_to_temp(pages)
+        new_files = scan_folder(crawl_dir)
+
+        # Append crawled files to whatever is already in the sidebar
+        self._files = self._files + new_files
+        self._sidebar.set_files(self._files)
+
+        msg_prefix = "Crawl cancelled." if cancelled else "Crawl complete."
+        self._status.SetStatusText(
+            f"{msg_prefix} {count} page{'s' if count != 1 else ''} added to sidebar"
+        )
+
+        notify = wx.adv.NotificationMessage(
+            "UI Analyzer",
+            f"{msg_prefix} {count} page{'s' if count != 1 else ''} added to the sidebar.",
+        )
+        try:
+            notify.Show(timeout=0)
+        except Exception:
+            pass
+
+        # Select the first crawled file automatically
+        if new_files:
+            self._sidebar.select_file(new_files[0])
 
     def _on_scan_complete(self, files: list[UIFile]) -> None:
         self._files = files
