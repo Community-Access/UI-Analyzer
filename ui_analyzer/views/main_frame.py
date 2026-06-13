@@ -163,8 +163,9 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, lambda _e: self.Close(),                id=wx.ID_EXIT)
 
     def _build_accelerators(self) -> None:
-        # Duplicate menu shortcuts as accelerators so they work
-        # even when focus is in a wx.TextCtrl or WebView
+        # AcceleratorTable for controls that are NOT EdgeWebView2 (WebView swallows
+        # Ctrl+O, Ctrl+R, etc. before the table fires).  EVT_CHAR_HOOK below covers
+        # those same shortcuts when the WebView has keyboard focus.
         accel_entries = [
             wx.AcceleratorEntry(wx.ACCEL_CTRL, ord("O"), _ID_OPEN_FOLDER),
             wx.AcceleratorEntry(wx.ACCEL_CTRL, ord("R"), _ID_ANALYZE),
@@ -177,6 +178,33 @@ class MainFrame(wx.Frame):
             wx.AcceleratorEntry(wx.ACCEL_CTRL, ord(","), _ID_SETTINGS),
         ]
         self.SetAcceleratorTable(wx.AcceleratorTable(accel_entries))
+
+        # EVT_CHAR_HOOK fires at the top-level window BEFORE any child window
+        # (including EdgeWebView2) can consume the key.  Use it to guarantee that
+        # our shortcuts work regardless of which control has focus.
+        self.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
+
+    def _on_char_hook(self, event: wx.KeyEvent) -> None:
+        ctrl  = event.ControlDown()
+        shift = event.ShiftDown()
+        key   = event.GetKeyCode()
+
+        if ctrl and not shift and key == ord("O"):
+            self._open_folder_dialog()
+            return
+        if ctrl and not shift and key == ord("R"):
+            self._trigger_analyze()
+            return
+        if ctrl and shift and key == ord("V"):
+            self._trigger_validate()
+            return
+        if ctrl and shift and key == ord("A"):
+            self._build_project_context()
+            return
+        if ctrl and shift and key == ord("S"):
+            self._save_output()
+            return
+        event.Skip()
 
     def _init_ai_client(self) -> AIClient:
         """Instantiate the correct AI client based on current configuration."""

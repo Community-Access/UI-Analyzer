@@ -25,32 +25,28 @@ try:
         body = markdown.markdown(text, extensions=["tables", "fenced_code"])
         return _wrap_html(body)
 except ImportError:
+    import re as _re
     def _md_to_html(text: str) -> str:  # type: ignore[misc]
-        # Minimal fallback: wrap paragraphs
-        paras = "\n".join(f"<p>{line}</p>" for line in text.split("\n\n") if line.strip())
-        return _wrap_html(paras)
+        lines: list[str] = []
+        for block in text.split("\n\n"):
+            block = block.strip()
+            if not block:
+                continue
+            if block.startswith("### "):
+                tag = "h3"
+                lines.append(f"<{tag}>{block[4:]}</{tag}>")
+            elif block.startswith("## "):
+                tag = "h2"
+                lines.append(f"<{tag}>{block[3:]}</{tag}>")
+            elif block.startswith("# "):
+                lines.append(f"<h1>{block[2:]}</h1>")
+            elif block.startswith("- ") or block.startswith("* "):
+                items = "".join(f"<li>{ln[2:]}</li>" for ln in block.splitlines() if ln.startswith(("- ", "* ")))
+                lines.append(f"<ul>{items}</ul>")
+            else:
+                lines.append(f"<p>{block}</p>")
+        return _wrap_html("\n".join(lines))
 
-
-_KEY_BRIDGE_JS = """
-<script>
-document.addEventListener('keydown', function(e) {
-  if (e.ctrlKey && !e.shiftKey && e.key === 'r') {
-    e.preventDefault();
-    if (window.wx) window.wx.postMessage('analyze');
-  } else if (e.ctrlKey && e.shiftKey && (e.key === 'V' || e.key === 'v')) {
-    e.preventDefault();
-    if (window.wx) window.wx.postMessage('validate');
-  } else if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey && !e.altKey) {
-    // Only fire analyze if focus is not inside a form field
-    var tag = document.activeElement ? document.activeElement.tagName : '';
-    if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
-      e.preventDefault();
-      if (window.wx) window.wx.postMessage('analyze');
-    }
-  }
-});
-</script>
-"""
 
 
 def _announce(message: str) -> None:
@@ -83,7 +79,6 @@ def _wrap_html(body: str) -> str:
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light dark">
-{_KEY_BRIDGE_JS}
 <style>
 body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
      font-size:14px;line-height:1.7;
@@ -330,10 +325,7 @@ class DetailPanel(wx.Panel):
         if hasattr(self._result_window, "SetName"):
             self._result_window.SetName("Analysis output")
 
-        # Bind EVT_WEBVIEW_LOADED so we can register AddScriptMessageHandler
-        # AFTER the first page is fully loaded — calling it during init corrupts
-        # the WebView on some EdgeWebView2 builds and causes the black screen.
-        self._script_handler_registered = False
+        # Focus the WebView after load so NVDA enters browse mode immediately.
         if hasattr(self._result_window, "Bind"):
             self._result_window.Bind(
                 wx.html2.EVT_WEBVIEW_LOADED,
@@ -645,29 +637,8 @@ class DetailPanel(wx.Panel):
             self._on_detach(self._current_file)
 
     def _on_webview_loaded(self, _event: wx.html2.WebViewEvent) -> None:
-        """After page load: register JS bridge once, then focus so NVDA enters browse mode."""
-        if not self._script_handler_registered:
-            if hasattr(self._result_window, "AddScriptMessageHandler"):
-                try:
-                    self._result_window.AddScriptMessageHandler("wx")
-                    self._result_window.Bind(
-                        wx.html2.EVT_WEBVIEW_SCRIPT_MESSAGE_RECEIVED,
-                        self._on_webview_message,
-                    )
-                    self._script_handler_registered = True
-                except Exception:
-                    pass
-
-        # Move keyboard focus into the WebView so NVDA loads its virtual buffer
-        # and the user can navigate headings with H immediately after analysis.
+        """Focus the WebView after load so NVDA enters browse mode immediately."""
         self._result_window.SetFocus()
-
-    def _on_webview_message(self, event: wx.html2.WebViewEvent) -> None:
-        msg = event.GetString()
-        if msg == "analyze":
-            self._on_analyze_click(event)
-        elif msg == "validate":
-            self._on_validate_click(event)
 
     def _on_follow_up_submit(self, _event: wx.CommandEvent) -> None:
         question = self._fu_field.GetValue().strip()
