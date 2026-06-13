@@ -58,7 +58,7 @@ def _wrap_html(body: str) -> str:
 body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
      font-size:14px;line-height:1.7;
      margin:16px;max-width:820px;
-     background-color: transparent;
+     background-color: #ffffff;
      color: #1c1c1e;}}
 h2{{font-size:16px;font-weight:700;margin:24px 0 8px;
    border-bottom:1px solid #d2d2d7;padding-bottom:4px}}
@@ -75,7 +75,7 @@ td{{padding:8px 12px;border:1px solid #c6c6c8;vertical-align:top}}
 tr:nth-child(even) td{{background:#f9f9fb}}
 hr{{border:none;border-top:1px solid #d2d2d7;margin:20px 0}}
 @media(prefers-color-scheme:dark){{
-  body{{color: #f2f2f7; background-color: transparent;}}
+  body{{color: #f2f2f7; background-color: #1c1c1e;}}
   h2{{border-bottom-color:#38383a}}
   code,pre{{background:#2c2c2e}}
   th{{background:#2c2c2e;border-color:#48484a}}
@@ -89,7 +89,7 @@ hr{{border:none;border-top:1px solid #d2d2d7;margin:20px 0}}
 }}
 </style>
 </head>
-<body style="background-color: transparent;">
+<body>
 {body}
 </body>
 </html>"""

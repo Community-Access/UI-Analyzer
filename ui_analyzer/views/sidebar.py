@@ -66,11 +66,13 @@ class SidebarPanel(wx.Panel):
         on_open_folder: Callable[[], None],
         on_drop_folder: Callable[[Path], None],
         on_attachment_changed: Optional[Callable[[UIFile], None]] = None,
+        on_activate: Optional[Callable[[UIFile], None]] = None,
     ) -> None:
         super().__init__(parent)
         self._on_select             = on_select
         self._on_open_folder        = on_open_folder
         self._on_attachment_changed = on_attachment_changed
+        self._on_activate           = on_activate   # Enter / double-click → analyze
         self._files: list[UIFile]   = []
 
         self._build_ui()
