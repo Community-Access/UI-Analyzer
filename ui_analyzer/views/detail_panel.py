@@ -11,13 +11,6 @@ from ui_analyzer.models.ui_file import (
     UIFile, UIAnalysis, OutputMode, TableFormat, ValidationResult,
 )
 
-# Import the accessible webview library
-try:
-    from wx_accessible_webview import AccessibleWebView
-    _HAS_ACCESSIBLE_WV = True
-except ImportError:
-    _HAS_ACCESSIBLE_WV = False
-
 # Markdown → HTML (simple, no external dep needed for basic output)
 try:
     import markdown
@@ -49,25 +42,43 @@ except ImportError:
 
 
 
-def _announce(message: str) -> None:
-    """Post a screen-reader announcement without a visible dialog.
+_KEY_BRIDGE_JS = """\
+<script>
+document.addEventListener('keydown', function(e) {
+  var wx = window.wx;
+  if (!wx) return;
+  if (e.ctrlKey && !e.shiftKey && e.key === 'r') {
+    e.preventDefault(); wx.postMessage('analyze');
+  } else if (e.ctrlKey && !e.shiftKey && e.key === 'o') {
+    e.preventDefault(); wx.postMessage('open_folder');
+  } else if (e.ctrlKey && e.shiftKey && (e.key === 'V' || e.key === 'v')) {
+    e.preventDefault(); wx.postMessage('validate');
+  } else if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+    var tag = document.activeElement ? document.activeElement.tagName : '';
+    if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
+      e.preventDefault(); wx.postMessage('analyze');
+    }
+  }
+});
+</script>"""
 
-    Uses the Windows UIA LiveSetting pattern via ctypes so NVDA / JAWS read
-    the message immediately without the user needing to query the status bar.
-    Falls back silently if the API is unavailable.
+
+def _announce(message: str) -> None:
+    """Post a transient screen-reader announcement.
+
+    Windows: wx.adv.NotificationMessage routes through the UIA notification
+    system; NVDA and JAWS read it aloud immediately.
+    macOS: the same call posts to Notification Center; VoiceOver announces
+    it if the user has "Announce notifications" enabled in VoiceOver Utility.
+    Falls back silently if wx.adv is unavailable.
     """
     try:
-        import ctypes
-        # UIA_LiveRegionChangedEventId = 20024
-        # We set the accessible name of a hidden element via NotifyWinEvent
-        # The simplest reliable approach on Windows: use UiaRaiseAutomationEvent
-        # via oleacc / uiautomation. wx doesn't expose this directly, so we use
-        # a tray-less NotificationMessage with Show(timeout=1) which NVDA reads.
         import wx.adv
         note = wx.adv.NotificationMessage()
         note.SetTitle("UI Analyzer")
         note.SetMessage(message)
-        note.Show(1)   # auto-dismiss after 1 second
+        # timeout=0 → stays in notification center until dismissed
+        note.Show(timeout=0)
     except Exception:
         pass
 
@@ -79,6 +90,7 @@ def _wrap_html(body: str) -> str:
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light dark">
+{_KEY_BRIDGE_JS}
 <style>
 body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
      font-size:14px;line-height:1.7;
@@ -132,7 +144,7 @@ class DetailPanel(wx.Panel):
 
     Accessibility:
       • Toolbar buttons have descriptive labels and tooltips
-      • Output uses AccessibleWebView (ARIA live regions, NVDA/JAWS compatible)
+      • Output uses wx.html2.WebView with JS key bridge for keyboard shortcuts
       • During streaming, plain wx.TextCtrl is used (fully accessible to AT)
       • Status bar text updated on each state change
       • Follow-up bar has paired label + text field + button
@@ -148,14 +160,16 @@ class DetailPanel(wx.Panel):
         status_bar:     wx.StatusBar,
         on_validate:    Optional[Callable[[UIFile], None]] = None,
         on_detach:      Optional[Callable[[UIFile], None]] = None,
+        on_open_folder: Optional[Callable[[], None]] = None,
     ) -> None:
         super().__init__(parent)
-        self._on_analyze    = on_analyze
-        self._on_copy       = on_copy
-        self._on_save       = on_save
-        self._on_follow_up  = on_follow_up
-        self._on_validate   = on_validate
-        self._on_detach     = on_detach
+        self._on_analyze     = on_analyze
+        self._on_copy        = on_copy
+        self._on_save        = on_save
+        self._on_follow_up   = on_follow_up
+        self._on_validate    = on_validate
+        self._on_detach      = on_detach
+        self._on_open_folder = on_open_folder
         self._status_bar    = status_bar
         self._current_file: Optional[UIFile] = None
         self._current_mode  = OutputMode.PROSE
@@ -314,25 +328,29 @@ class DetailPanel(wx.Panel):
         self._loading_panel.SetSizer(lp)
         sizer.Add(self._loading_panel, 1, wx.EXPAND)
 
-        # Result state — AccessibleWebView (falls back to wx.html2.WebView)
-        if _HAS_ACCESSIBLE_WV:
-            self._result_view = AccessibleWebView(self)
-            self._result_window = self._result_view.control
-        else:
-            self._result_view = wx.html2.WebView.New(self)
-            self._result_window = self._result_view
+        # Result state — always use wx.html2.WebView directly.
+        # AccessibleWebView wraps the WebView for live-region appending, but
+        # we need full-document SetPage() so we own the WebView ourselves.
+        self._result_view = wx.html2.WebView.New(self)
+        self._result_window = self._result_view
+        self._result_view.SetName("Analysis output")
 
-        if hasattr(self._result_window, "SetName"):
-            self._result_window.SetName("Analysis output")
-
-        # Focus the WebView after load so NVDA enters browse mode immediately.
-        if hasattr(self._result_window, "Bind"):
-            self._result_window.Bind(
-                wx.html2.EVT_WEBVIEW_LOADED,
-                self._on_webview_loaded,
+        # Register the JS→wxPython message bridge BEFORE the first page load.
+        # Calling AddScriptMessageHandler after a page is already loaded causes
+        # EdgeWebView2 to silently reload (blank screen bug).  Calling it here,
+        # while the WebView is freshly created, is safe on all platforms.
+        try:
+            self._result_view.AddScriptMessageHandler("wx")
+            self._result_view.Bind(
+                wx.html2.EVT_WEBVIEW_SCRIPT_MESSAGE_RECEIVED,
+                self._on_webview_message,
             )
+        except Exception:
+            pass  # older WebView backend: no bridge, keyboard still works via menu
 
-        sizer.Add(self._result_window, 1, wx.EXPAND)
+        self._result_view.Bind(wx.html2.EVT_WEBVIEW_LOADED, self._on_webview_loaded)
+
+        sizer.Add(self._result_view, 1, wx.EXPAND)
 
         # Error state
         self._error_panel = wx.Panel(self)
@@ -587,22 +605,20 @@ class DetailPanel(wx.Panel):
     def _display_analysis(self, analysis: UIAnalysis) -> None:
         content = analysis.content.strip()
         if analysis.is_html or content.startswith("<!DOCTYPE") or content.startswith("<html"):
-            html = content
+            # AI-generated full HTML document: inject the key bridge before </body>
+            # so Ctrl+R, Ctrl+O, Enter still fire even though this HTML doesn't
+            # go through _wrap_html.
+            if "</body>" in content:
+                html = content.replace("</body>", f"{_KEY_BRIDGE_JS}\n</body>", 1)
+            else:
+                html = content + _KEY_BRIDGE_JS
         else:
             html = _md_to_html(content)
 
-        # Show the WebView BEFORE loading content — EdgeWebView2 does not
-        # render into a hidden control; calling SetPage/LoadURL while the
-        # panel is hidden produces a blank white pane when it becomes visible.
+        # Show the WebView BEFORE calling SetPage — EdgeWebView2 may silently
+        # drop SetPage calls made while the control is hidden.
         self._show_state("result")
-
-        if _HAS_ACCESSIBLE_WV and hasattr(self._result_view, "set_content"):
-            self._result_view.set_content(html)
-        elif hasattr(self._result_view, "SetPage"):
-            # SetPage works reliably now that background-color is explicit
-            # (#ffffff / #1c1c1e) — the previous black screen was caused by
-            # transparent backgrounds, not by the SetPage call itself.
-            self._result_view.SetPage(html, "about:blank")
+        self._result_view.SetPage(html, "")
 
     def _on_mode_change(self, _event: wx.CommandEvent) -> None:
         idx = self._mode_choice.GetSelection()
@@ -638,7 +654,16 @@ class DetailPanel(wx.Panel):
 
     def _on_webview_loaded(self, _event: wx.html2.WebViewEvent) -> None:
         """Focus the WebView after load so NVDA enters browse mode immediately."""
-        self._result_window.SetFocus()
+        self._result_view.SetFocus()
+
+    def _on_webview_message(self, event: wx.html2.WebViewEvent) -> None:
+        msg = event.GetString()
+        if msg == "analyze":
+            self._on_analyze_click(event)
+        elif msg == "validate":
+            self._on_validate_click(event)
+        elif msg == "open_folder" and self._on_open_folder:
+            self._on_open_folder()
 
     def _on_follow_up_submit(self, _event: wx.CommandEvent) -> None:
         question = self._fu_field.GetValue().strip()
@@ -780,15 +805,29 @@ class ValidationResultDialog(wx.Dialog):
         sizer.AddSpacer(16)
         scroll.SetSizer(sizer)
 
-        # ── Close button outside scroll area ──────────────────────────────────
+        # ── Button row outside scroll area ────────────────────────────────────
         outer.Add(scroll, 1, wx.EXPAND)
         outer.Add(wx.StaticLine(self), 0, wx.EXPAND)
+
+        btn_row = wx.BoxSizer(wx.HORIZONTAL)
+
+        copy_btn = wx.Button(self, label="Copy")
+        copy_btn.SetMinSize((-1, 44))
+        copy_btn.SetName("Copy validation result to clipboard")
+        copy_btn.SetToolTip("Copy all sections to clipboard (Ctrl+C)")
+        copy_btn.Bind(wx.EVT_BUTTON, self._on_copy)
+        btn_row.Add(copy_btn, 0, wx.LEFT | wx.TOP | wx.BOTTOM, 12)
+
+        btn_row.AddStretchSpacer()
+
         close_btn = wx.Button(self, wx.ID_CLOSE, "Close")
         close_btn.SetMinSize((-1, 44))
         close_btn.SetName("Close validation result dialog")
-        close_btn.SetToolTip("Close this dialog (Escape or Enter)")
+        close_btn.SetToolTip("Close this dialog (Escape)")
         close_btn.Bind(wx.EVT_BUTTON, lambda _e: self.EndModal(wx.ID_CLOSE))
-        outer.Add(close_btn, 0, wx.ALIGN_RIGHT | wx.ALL, 12)
+        btn_row.Add(close_btn, 0, wx.RIGHT | wx.TOP | wx.BOTTOM, 12)
+
+        outer.Add(btn_row, 0, wx.EXPAND)
         self.SetSizer(outer)
 
         self.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
@@ -796,8 +835,34 @@ class ValidationResultDialog(wx.Dialog):
         # Focus the summary so NVDA announces the result count immediately
         wx.CallAfter(summary_lbl.SetFocus)
 
+    def _build_plain_text(self) -> str:
+        lines: list[str] = []
+        items_by_section = [
+            self._result.stands_by,
+            self._result.retracts,
+            self._result.additions,
+        ]
+        for (symbol, label, _bg, _fg), items in zip(self._SECTIONS, items_by_section):
+            lines.append(f"=== {symbol}  {label}  ({len(items)}) ===")
+            if items:
+                for i, item in enumerate(items, 1):
+                    lines.append(f"{i}. {item.text}")
+            else:
+                lines.append("(none)")
+            lines.append("")
+        return "\n".join(lines).strip()
+
+    def _on_copy(self, _event: wx.CommandEvent) -> None:
+        text = self._build_plain_text()
+        if wx.TheClipboard.Open():
+            wx.TheClipboard.SetData(wx.TextDataObject(text))
+            wx.TheClipboard.Close()
+
     def _on_char_hook(self, event: wx.KeyEvent) -> None:
-        if event.GetKeyCode() == wx.WXK_ESCAPE:
+        key = event.GetKeyCode()
+        if key == wx.WXK_ESCAPE:
             self.EndModal(wx.ID_CLOSE)
+        elif event.CmdDown() and key == ord("C"):
+            self._on_copy(event)
         else:
             event.Skip()

@@ -17,7 +17,13 @@ from ui_analyzer.services.anthropic_client import AnthropicClient
 from ui_analyzer.services.openai_client import OpenAIClient
 from ui_analyzer.services.ui_analyzer import UIAnalyzer
 from ui_analyzer.views.sidebar import SidebarPanel
-from ui_analyzer.views.detail_panel import DetailPanel, _HAS_ACCESSIBLE_WV
+from ui_analyzer.views.detail_panel import DetailPanel
+
+try:
+    from wx_accessible_webview import AccessibleWebView as _AccessibleWebView  # type: ignore[import]
+    _HAS_ACCESSIBLE_WV = True
+except ImportError:
+    _HAS_ACCESSIBLE_WV = False
 from ui_analyzer.views.model_picker import ModelPickerDialog
 from ui_analyzer.views.settings_dialog import SettingsDialog
 
@@ -106,6 +112,7 @@ class MainFrame(wx.Frame):
             status_bar=self._status,
             on_validate=self._start_validate,
             on_detach=self._on_detail_detach,
+            on_open_folder=self._open_folder_dialog,
         )
 
         self._splitter.SplitVertically(self._sidebar, self._detail, _SIDEBAR_W)
@@ -185,23 +192,24 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
 
     def _on_char_hook(self, event: wx.KeyEvent) -> None:
-        ctrl  = event.ControlDown()
+        # CmdDown() → Cmd on macOS, Ctrl on Windows/Linux; cross-platform safe.
+        cmd   = event.CmdDown()
         shift = event.ShiftDown()
         key   = event.GetKeyCode()
 
-        if ctrl and not shift and key == ord("O"):
+        if cmd and not shift and key == ord("O"):
             self._open_folder_dialog()
             return
-        if ctrl and not shift and key == ord("R"):
+        if cmd and not shift and key == ord("R"):
             self._trigger_analyze()
             return
-        if ctrl and shift and key == ord("V"):
+        if cmd and shift and key == ord("V"):
             self._trigger_validate()
             return
-        if ctrl and shift and key == ord("A"):
+        if cmd and shift and key == ord("A"):
             self._build_project_context()
             return
-        if ctrl and shift and key == ord("S"):
+        if cmd and shift and key == ord("S"):
             self._save_output()
             return
         event.Skip()
@@ -611,8 +619,7 @@ class ProjectQuestionDialog(wx.Dialog):
 
         if _HAS_ACCESSIBLE_WV:
             try:
-                from wx_accessible_webview import AccessibleWebView  # type: ignore[import]
-                self._answer_view = AccessibleWebView(panel)
+                self._answer_view = _AccessibleWebView(panel)
                 self._answer_window = self._answer_view.control
             except Exception:
                 self._answer_view = wx.TextCtrl(

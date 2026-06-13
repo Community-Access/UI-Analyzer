@@ -2,15 +2,21 @@
 
 The attachment for `foo.swift` is stored as `foo.swift.context.png` at the
 folder root.  The binding from relative_path → attachment_filename is kept in
-a JSON map at %LOCALAPPDATA%/UIAnalyzer/attachments.json so it survives scans
+a JSON map inside the platform user-data directory so it survives scans
 (UIFile.id is ephemeral; relative_path is stable).
+
+Platform data directory (via platformdirs):
+  Windows : %LOCALAPPDATA%/UIAnalyzer/
+  macOS   : ~/Library/Application Support/UIAnalyzer/
+  Linux   : ~/.local/share/UIAnalyzer/
 """
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 from typing import Optional
+
+import platformdirs
 
 _SUFFIX = ".context"
 
@@ -31,8 +37,7 @@ def looks_like_attachment(name: str) -> bool:
 # ── Persistence ───────────────────────────────────────────────────────────────
 
 def _store_path() -> Path:
-    base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
-    return base / "UIAnalyzer" / "attachments.json"
+    return Path(platformdirs.user_data_dir("UIAnalyzer")) / "attachments.json"
 
 
 def _load() -> dict[str, str]:
