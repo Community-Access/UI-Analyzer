@@ -55,12 +55,13 @@ class MainFrame(wx.Frame):
             title=_APP_NAME,
             size=(_DEFAULT_W, _DEFAULT_H),
         )
-        self._config   = ConfigManager()
-        self._client   = self._init_ai_client()
+        self._config          = ConfigManager()
+        self._client          = self._init_ai_client()
         self._model: Optional[str] = None
         self._analyzer: Optional[UIAnalyzer] = None
         self._current_file: Optional[UIFile] = None
         self._files: list[UIFile] = []
+        self._context_cancel  = False
 
         self._build_ui()
         self._build_menu()
@@ -91,6 +92,9 @@ class MainFrame(wx.Frame):
             on_drop_folder=self._load_folder,
             on_attachment_changed=self._on_attachment_changed,
             on_activate=self._trigger_analyze,
+            on_build_context=self._build_project_context,
+            on_cancel_context=self._cancel_project_context,
+            on_clear_context=self._clear_project_context,
         )
 
         self._detail = DetailPanel(
@@ -467,21 +471,45 @@ class MainFrame(wx.Frame):
         files    = list(self._files)
         total    = len(files)
         self._status.SetStatusText(f"Building project context for {total} files…")
+        self._sidebar.set_context_state("building", (0, total))
+        self._context_cancel = False
 
         def do_build() -> None:
             try:
-                def on_progress(done: int, total: int) -> None:
-                    wx.CallAfter(
-                        self._status.SetStatusText,
-                        f"Building context: {done}/{total}…"
-                    )
+                def on_progress(done: int, tot: int) -> None:
+                    wx.CallAfter(self._sidebar.set_context_state, "building", (done, tot))
+                    wx.CallAfter(self._status.SetStatusText, f"Building context: {done}/{tot}…")
+
                 analyzer.build_project_context(files, on_progress)
-                wx.CallAfter(self._status.SetStatusText,
-                             "Project context ready — use Ctrl+Shift+I to ask a question")
+                wx.CallAfter(self._on_context_built)
             except Exception as exc:
-                wx.CallAfter(self._status.SetStatusText, f"Context error: {exc}")
+                wx.CallAfter(self._on_context_error, str(exc))
 
         threading.Thread(target=do_build, daemon=True).start()
+
+    def _on_context_built(self) -> None:
+        self._sidebar.set_context_state("clear")
+        self._status.SetStatusText("Project context ready — use Ctrl+Shift+I to ask questions")
+        from ui_analyzer.views.detail_panel import _announce
+        _announce("Project context ready. Use Ctrl Shift I to ask questions about all files.")
+
+    def _on_context_error(self, msg: str) -> None:
+        self._sidebar.set_context_state("build")
+        self._status.SetStatusText(f"Context build failed: {msg}")
+        wx.MessageBox(f"Failed to build project context:\n\n{msg}",
+                      "Context Error", wx.OK | wx.ICON_ERROR, self)
+
+    def _cancel_project_context(self) -> None:
+        if self._analyzer:
+            self._analyzer.clear_project_context()
+        self._sidebar.set_context_state("build")
+        self._status.SetStatusText("Context build cancelled")
+
+    def _clear_project_context(self) -> None:
+        if self._analyzer:
+            self._analyzer.clear_project_context()
+        self._sidebar.set_context_state("build")
+        self._status.SetStatusText("Project context cleared")
 
     def _open_ask_project_dialog(self) -> None:
         if not self._analyzer or not self._analyzer.project_context:

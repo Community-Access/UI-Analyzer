@@ -335,6 +335,35 @@ def _extract_image_content(path: Path) -> str:
     return "\n".join(lines)
 
 
+def _build_ocr_suffix(png_data: bytes) -> str:
+    """Return a text block describing the screenshot for text-only models.
+
+    Writes png_data to a temp file, runs OCR via _extract_image_content, then
+    deletes the temp file. If OCR is unavailable the suffix is an empty string
+    (the analysis will proceed without screenshot information).
+    """
+    if not _HAS_OCR:
+        return ""
+    import os, tempfile
+    try:
+        fd, tmp = tempfile.mkstemp(suffix=".png")
+        with os.fdopen(fd, "wb") as f:
+            f.write(png_data)
+        ocr = _extract_image_content(Path(tmp))
+        return (
+            "\n\nOCR text extracted from the attached screenshot "
+            "(model does not support images — text approximation only):\n"
+            "---\n" + ocr + "\n---"
+        )
+    except Exception:
+        return ""
+    finally:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+
+
 # ── UIAnalyzer ────────────────────────────────────────────────────────────────
 
 class FileSession:
@@ -520,19 +549,38 @@ class UIAnalyzer:
         vision_mode = VisionMode.NOT_ATTACHED
         if screenshot_data:
             b64 = base64.b64encode(screenshot_data).decode()
-            session.messages.append({
+            multimodal_msg = {
                 "role": "user",
                 "content": prompt + "\n\nA screenshot of this UI is attached for visual reference.",
                 "images": [b64],
-            })
+            }
+            session.messages.append(multimodal_msg)
             vision_mode = VisionMode.MULTIMODAL
         else:
             session.add_user(prompt)
 
         accumulated = ""
-        for chunk in self._client.stream_chat(self.model, session.messages):
-            accumulated += chunk
-            on_chunk(accumulated)
+        try:
+            for chunk in self._client.stream_chat(self.model, session.messages):
+                accumulated += chunk
+                on_chunk(accumulated)
+        except Exception as exc:
+            # Model rejected the images array (not vision-capable → 400).
+            # Strip the image and retry with OCR text injected instead.
+            if screenshot_data and vision_mode == VisionMode.MULTIMODAL and (
+                "400" in str(exc) or "images" in str(exc).lower()
+            ):
+                accumulated = ""
+                # Replace multimodal message with plain prompt + OCR text
+                session.messages = [m for m in session.messages if m.get("images") is None]
+                ocr_suffix = _build_ocr_suffix(screenshot_data)
+                session.add_user(prompt + ocr_suffix)
+                vision_mode = VisionMode.OCR_TEXT
+                for chunk in self._client.stream_chat(self.model, session.messages):
+                    accumulated += chunk
+                    on_chunk(accumulated)
+            else:
+                raise
 
         if is_html:
             result = _extract_html(accumulated)

@@ -67,13 +67,20 @@ class SidebarPanel(wx.Panel):
         on_drop_folder: Callable[[Path], None],
         on_attachment_changed: Optional[Callable[[UIFile], None]] = None,
         on_activate: Optional[Callable[[UIFile], None]] = None,
+        on_build_context: Optional[Callable[[], None]] = None,
+        on_cancel_context: Optional[Callable[[], None]] = None,
+        on_clear_context: Optional[Callable[[], None]] = None,
     ) -> None:
         super().__init__(parent)
         self._on_select             = on_select
         self._on_open_folder        = on_open_folder
         self._on_attachment_changed = on_attachment_changed
-        self._on_activate           = on_activate   # Enter / double-click → analyze
+        self._on_activate           = on_activate
+        self._on_build_context      = on_build_context
+        self._on_cancel_context     = on_cancel_context
+        self._on_clear_context      = on_clear_context
         self._files: list[UIFile]   = []
+        self._context_state         = "hidden"  # hidden | build | building | clear
 
         self._build_ui()
         self.SetDropTarget(FolderDropTarget(on_drop_folder))
@@ -129,10 +136,62 @@ class SidebarPanel(wx.Panel):
         self._hint.SetForegroundColour(wx.Colour(120, 120, 120))
         sizer.Add(self._hint, 0, wx.ALIGN_CENTER | wx.ALL, 16)
 
+        # ── Project Context strip (pinned to bottom, matches Mac sidebar) ─────
+        sizer.Add(wx.StaticLine(self), 0, wx.EXPAND)
+
+        # "Build Project Context" button — shown when files are loaded
+        self._ctx_build_btn = wx.Button(self, label="Build Project Context", size=(-1, 44))
+        self._ctx_build_btn.SetName("Build project context")
+        self._ctx_build_btn.SetToolTip(
+            "Analyse all files so you can ask cross-screen questions (Ctrl+Shift+A)"
+        )
+        self._ctx_build_btn.Bind(wx.EVT_BUTTON, lambda _e: self._on_build_context and self._on_build_context())
+        sizer.Add(self._ctx_build_btn, 0, wx.EXPAND | wx.ALL, 4)
+
+        # "Building…" state: progress gauge + Cancel button
+        self._ctx_building_panel = wx.Panel(self)
+        bp = wx.BoxSizer(wx.HORIZONTAL)
+        self._ctx_gauge = wx.Gauge(self._ctx_building_panel, range=100, size=(-1, 4))
+        self._ctx_gauge.SetName("Project context build progress")
+        self._ctx_progress_lbl = wx.StaticText(self._ctx_building_panel, label="Analysing…")
+        self._ctx_progress_lbl.SetName("Project context build status")
+        self._ctx_cancel_btn = wx.Button(self._ctx_building_panel, label="Cancel", size=(-1, 36))
+        self._ctx_cancel_btn.SetName("Cancel project context build")
+        self._ctx_cancel_btn.SetToolTip("Stop analysing (Escape)")
+        self._ctx_cancel_btn.Bind(wx.EVT_BUTTON, lambda _e: self._on_cancel_context and self._on_cancel_context())
+        bp.Add(self._ctx_progress_lbl, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 8)
+        bp.Add(self._ctx_cancel_btn, 0, wx.LEFT | wx.RIGHT, 4)
+        self._ctx_building_panel.SetSizer(bp)
+        sizer.Add(self._ctx_building_panel, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 4)
+
+        # "Clear Project Context" button — shown when context is ready
+        self._ctx_clear_btn = wx.Button(self, label="Clear Project Context", size=(-1, 44))
+        self._ctx_clear_btn.SetName("Clear project context")
+        self._ctx_clear_btn.SetToolTip("Remove the project summary and enable rebuilding")
+        self._ctx_clear_btn.Bind(wx.EVT_BUTTON, lambda _e: self._on_clear_context and self._on_clear_context())
+        sizer.Add(self._ctx_clear_btn, 0, wx.EXPAND | wx.ALL, 4)
+
         self.SetSizer(sizer)
         self._refresh_hint()
+        self._refresh_context_strip()
 
     # ── Public API ────────────────────────────────────────────────────────────
+
+    def set_context_state(self, state: str, progress: tuple[int, int] = (0, 0)) -> None:
+        """Update the Build Context strip state.
+
+        state: 'hidden' | 'build' | 'building' | 'clear'
+        progress: (current, total) when state == 'building'
+        """
+        self._context_state = state
+        if state == "building":
+            done, total = progress
+            self._ctx_gauge.SetRange(max(total, 1))
+            self._ctx_gauge.SetValue(done)
+            label = f"Analysing {done}/{total}…"
+            self._ctx_progress_lbl.SetLabel(label)
+            self._ctx_progress_lbl.SetName(label)
+        self._refresh_context_strip()
 
     def set_files(self, files: list[UIFile]) -> None:
         self._files = files
@@ -286,8 +345,20 @@ class SidebarPanel(wx.Panel):
         if self._on_attachment_changed:
             self._on_attachment_changed(file)
 
+    def _refresh_context_strip(self) -> None:
+        s = self._context_state
+        has_files = bool(self._files)
+        self._ctx_build_btn.Show(has_files and s == "build")
+        self._ctx_building_panel.Show(has_files and s == "building")
+        self._ctx_clear_btn.Show(has_files and s == "clear")
+        self.Layout()
+
     def _refresh_hint(self) -> None:
         has_files = bool(self._files)
         self._list.Show(has_files)
         self._hint.Show(not has_files)
+        # Show Build button whenever files are present and no context yet
+        if has_files and self._context_state == "hidden":
+            self._context_state = "build"
+        self._refresh_context_strip()
         self.Layout()
