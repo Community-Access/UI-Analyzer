@@ -90,6 +90,7 @@ class MainFrame(wx.Frame):
             on_open_folder=self._open_folder_dialog,
             on_drop_folder=self._load_folder,
             on_attachment_changed=self._on_attachment_changed,
+            on_activate=self._trigger_analyze,
         )
 
         self._detail = DetailPanel(

@@ -183,8 +183,11 @@ class SidebarPanel(wx.Panel):
             self._on_select(self._files[idx])
 
     def _on_item_activated(self, event: wx.ListEvent) -> None:
-        # Enter key / double-click — same as select
+        # Enter key / double-click → select AND trigger analyze
         self._on_item_selected(event)
+        idx = event.GetIndex()
+        if 0 <= idx < len(self._files) and self._on_activate:
+            self._on_activate(self._files[idx])
 
     def _on_key(self, event: wx.KeyEvent) -> None:
         # Ctrl+O → open folder

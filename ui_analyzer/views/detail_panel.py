@@ -40,6 +40,13 @@ document.addEventListener('keydown', function(e) {
   } else if (e.ctrlKey && e.shiftKey && (e.key === 'V' || e.key === 'v')) {
     e.preventDefault();
     if (window.wx) window.wx.postMessage('validate');
+  } else if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+    // Only fire analyze if focus is not inside a form field
+    var tag = document.activeElement ? document.activeElement.tagName : '';
+    if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
+      e.preventDefault();
+      if (window.wx) window.wx.postMessage('analyze');
+    }
   }
 });
 </script>
@@ -300,17 +307,15 @@ class DetailPanel(wx.Panel):
         if hasattr(self._result_window, "SetName"):
             self._result_window.SetName("Analysis output")
 
-        # Register the "wx" postMessage handler so the JS key bridge can fire
-        # Ctrl+R → analyze and Ctrl+Shift+V → validate even when the WebView has focus
-        if hasattr(self._result_window, "AddScriptMessageHandler"):
-            try:
-                self._result_window.AddScriptMessageHandler("wx")
-                self._result_window.Bind(
-                    wx.html2.EVT_WEBVIEW_SCRIPT_MESSAGE_RECEIVED,
-                    self._on_webview_message,
-                )
-            except Exception:
-                pass
+        # Bind EVT_WEBVIEW_LOADED so we can register AddScriptMessageHandler
+        # AFTER the first page is fully loaded — calling it during init corrupts
+        # the WebView on some EdgeWebView2 builds and causes the black screen.
+        self._script_handler_registered = False
+        if hasattr(self._result_window, "Bind"):
+            self._result_window.Bind(
+                wx.html2.EVT_WEBVIEW_LOADED,
+                self._on_webview_loaded,
+            )
 
         sizer.Add(self._result_window, 1, wx.EXPAND)
 
@@ -332,68 +337,6 @@ class DetailPanel(wx.Panel):
         erp.AddStretchSpacer()
         self._error_panel.SetSizer(erp)
         sizer.Add(self._error_panel, 1, wx.EXPAND)
-
-        # ── Validation progress panel ─────────────────────────────────────────
-        self._val_progress_panel = wx.Panel(self)
-        vpp = wx.BoxSizer(wx.VERTICAL)
-        self._val_gauge = wx.Gauge(self._val_progress_panel, range=0, size=(-1, 4))
-        self._val_gauge.SetName("Validation progress")
-        self._val_gauge.Pulse()
-        val_prog_lbl = wx.StaticText(
-            self._val_progress_panel,
-            label="Validating against screenshot…",
-            style=wx.ALIGN_CENTER,
-        )
-        vpp.Add(self._val_gauge, 0, wx.EXPAND)
-        vpp.Add(val_prog_lbl, 0, wx.ALIGN_CENTER | wx.TOP, 8)
-        self._val_progress_panel.SetSizer(vpp)
-        self._val_progress_panel.Hide()
-        sizer.Add(self._val_progress_panel, 0, wx.EXPAND | wx.ALL, 4)
-
-        # ── Validation error panel ────────────────────────────────────────────
-        self._val_error_panel = wx.Panel(self)
-        vep = wx.BoxSizer(wx.HORIZONTAL)
-        self._val_error_lbl = wx.StaticText(self._val_error_panel, label="")
-        self._val_error_lbl.SetName("Validation error details")
-        self._val_error_lbl.SetForegroundColour(wx.Colour(200, 50, 50))
-        vep.Add(self._val_error_lbl, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 8)
-        self._val_error_panel.SetSizer(vep)
-        self._val_error_panel.Hide()
-        sizer.Add(self._val_error_panel, 0, wx.EXPAND)
-
-        # ── Validation result panel ───────────────────────────────────────────
-        self._val_result_panel = wx.Panel(self)
-        vrp = wx.BoxSizer(wx.VERTICAL)
-
-        # Three groups: Stands By / Retracts / Additions
-        for attr, symbol, label, color in (
-            ("_val_stands_box",   "[confirmed]", "Stands By",  wx.Colour(230, 255, 230)),
-            ("_val_retracts_box", "[retracted]", "Retracts",   wx.Colour(255, 235, 230)),
-            ("_val_additions_box","[new]",        "Additions", wx.Colour(230, 235, 255)),
-        ):
-            group_panel = wx.Panel(self._val_result_panel)
-            group_panel.SetBackgroundColour(color)
-            gp = wx.BoxSizer(wx.VERTICAL)
-            # Symbol prefix ensures meaning is conveyed by text, not color alone (WCAG 1.4.1).
-            # SetName spells it out for screen readers so NVDA/JAWS read a clear label.
-            hdr = wx.StaticText(group_panel, label=f"{symbol}  {label}")
-            hdr.SetFont(hdr.GetFont().Bold())
-            hdr.SetName(f"Validation section: {label}")
-            gp.Add(hdr, 0, wx.ALL, 6)
-            list_ctrl = wx.ListCtrl(
-                group_panel,
-                style=wx.LC_REPORT | wx.LC_NO_HEADER | wx.BORDER_NONE,
-            )
-            list_ctrl.SetName(f"Validation {label.lower()} list")
-            list_ctrl.InsertColumn(0, label, width=400)
-            gp.Add(list_ctrl, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 4)
-            group_panel.SetSizer(gp)
-            vrp.Add(group_panel, 1, wx.EXPAND | wx.ALL, 2)
-            setattr(self, attr, list_ctrl)
-
-        self._val_result_panel.SetSizer(vrp)
-        self._val_result_panel.Hide()
-        sizer.Add(self._val_result_panel, 0, wx.EXPAND | wx.ALL, 4)
 
         # ── Follow-up bar ─────────────────────────────────────────────────────
         fu_panel = wx.Panel(self)
@@ -502,10 +445,6 @@ class DetailPanel(wx.Panel):
         if file.is_analyzing:
             self._show_state("loading")
             self._status_bar.SetStatusText(f"Analyzing {file.name}…")
-        elif file.is_validating:
-            self.show_validation_progress()
-        elif file.validate_error:
-            self.show_validation_error(file.validate_error)
         elif file.analyze_error:
             self._error_lbl.SetLabel(f"Analysis failed:\n{file.analyze_error}")
             self._show_state("error")
@@ -570,60 +509,33 @@ class DetailPanel(wx.Panel):
         self.Layout()
 
     def show_validation_progress(self) -> None:
-        self._val_result_panel.Hide()
-        self._val_error_panel.Hide()
-        self._val_progress_panel.Show()
         self._validate_btn.SetLabel("Validating…")
         self._validate_btn.Disable()
         self._status_bar.SetStatusText("Validating against screenshot…")
-        self.Layout()
 
     def show_validation_error(self, msg: str) -> None:
-        self._val_progress_panel.Hide()
-        self._val_result_panel.Hide()
-        self._val_error_lbl.SetLabel(f"Validation failed: {msg}")
-        self._val_error_panel.Show()
         self._validate_btn.SetLabel("Re-validate")
         self._validate_btn.Enable()
         self._status_bar.SetStatusText("Validation failed")
-        self.Layout()
+        wx.MessageBox(
+            f"Validation failed:\n\n{msg}",
+            "Validation Error",
+            wx.OK | wx.ICON_ERROR,
+            self,
+        )
 
     def show_validation_result(self, result: ValidationResult) -> None:
-        self._val_progress_panel.Hide()
-        self._val_error_panel.Hide()
-
-        def _populate(list_ctrl: wx.ListCtrl, items: list) -> None:
-            list_ctrl.DeleteAllItems()
-            for i, item in enumerate(items):
-                list_ctrl.InsertItem(i, item.text)
-            # Auto-size the column to content
-            list_ctrl.SetColumnWidth(0, wx.LIST_AUTOSIZE)
-            # Cap height based on item count
-            row_h = list_ctrl.GetItemRect(0).height if items else 24
-            list_ctrl.SetMinSize((-1, min(max(row_h * len(items), 24), 200)))
-
-        if result.stands_by:
-            _populate(self._val_stands_box, result.stands_by)
-        if result.retracts:
-            _populate(self._val_retracts_box, result.retracts)
-        if result.additions:
-            _populate(self._val_additions_box, result.additions)
-
-        self._val_result_panel.Show()
         self._validate_btn.SetLabel("Re-validate")
         self._validate_btn.Enable()
-        self._status_bar.SetStatusText("Validation complete")
-        self.Layout()
-
-        # Announce to screen reader
-        total = (len(result.stands_by) + len(result.retracts) + len(result.additions))
-        if _HAS_ACCESSIBLE_WV and hasattr(self._result_view, "status"):
-            self._result_view.status(
-                f"Validation complete. "
-                f"{len(result.stands_by)} confirmed, "
-                f"{len(result.retracts)} retracted, "
-                f"{len(result.additions)} new additions."
-            )
+        self._status_bar.SetStatusText(
+            f"Validation complete — "
+            f"{len(result.stands_by)} confirmed, "
+            f"{len(result.retracts)} retracted, "
+            f"{len(result.additions)} new"
+        )
+        dlg = ValidationResultDialog(self, result)
+        dlg.ShowModal()
+        dlg.Destroy()
 
     def append_follow_up(self, answer: str) -> None:
         """Append follow-up answer to the output view."""
@@ -650,15 +562,18 @@ class DetailPanel(wx.Panel):
     # ── Private helpers ───────────────────────────────────────────────────────
 
     def _display_analysis(self, analysis: UIAnalysis) -> None:
-        if analysis.is_html or analysis.content.lstrip().startswith("<!DOCTYPE"):
-            html = analysis.content
+        content = analysis.content.strip()
+        if analysis.is_html or content.startswith("<!DOCTYPE") or content.startswith("<html"):
+            html = content
         else:
-            html = _md_to_html(analysis.content)
+            html = _md_to_html(content)
 
         if _HAS_ACCESSIBLE_WV and hasattr(self._result_view, "set_content"):
             self._result_view.set_content(html)
         elif hasattr(self._result_view, "SetPage"):
-            self._result_view.SetPage(html, "about:blank")
+            # Use file:/// base so scripts resolve; about:blank can suppress content
+            # on some EdgeWebView2 builds.
+            self._result_view.SetPage(html, "file:///")
 
         self._show_state("result")
 
@@ -694,6 +609,21 @@ class DetailPanel(wx.Panel):
         if self._current_file and self._on_detach:
             self._on_detach(self._current_file)
 
+    def _on_webview_loaded(self, _event: wx.html2.WebViewEvent) -> None:
+        """Register the postMessage bridge AFTER first page load, not during init."""
+        if self._script_handler_registered:
+            return
+        if hasattr(self._result_window, "AddScriptMessageHandler"):
+            try:
+                self._result_window.AddScriptMessageHandler("wx")
+                self._result_window.Bind(
+                    wx.html2.EVT_WEBVIEW_SCRIPT_MESSAGE_RECEIVED,
+                    self._on_webview_message,
+                )
+                self._script_handler_registered = True
+            except Exception:
+                pass
+
     def _on_webview_message(self, event: wx.html2.WebViewEvent) -> None:
         msg = event.GetString()
         if msg == "analyze":
@@ -711,3 +641,117 @@ class DetailPanel(wx.Panel):
     def enable_follow_up_btn(self) -> None:
         self._fu_btn.Enable()
         self._fu_field.SetFocus()
+
+
+# ── Validation result dialog ──────────────────────────────────────────────────
+
+class ValidationResultDialog(wx.Dialog):
+    """Accessible modal dialog showing the three-section validation result.
+
+    Matches the Mac LyraScan validation UX:
+    - Focus is trapped inside while open (wx.Dialog behaviour)
+    - Escape / Close button dismisses it
+    - Three labelled sections: Stands By / Retracts / Additions
+    - Each section header is bold and carries SetName() for screen readers
+    - Items are in a wx.ListCtrl so NVDA/JAWS can navigate them with arrow keys
+    - Status bar summary announced on open via SetStatusText on the parent frame
+    - Section headers use text symbols (not colour alone) to satisfy WCAG 1.4.1
+    """
+
+    def __init__(self, parent: wx.Window, result: ValidationResult) -> None:
+        super().__init__(
+            parent,
+            title="Validation Result",
+            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+            size=(640, 560),
+        )
+        self._result = result
+        self._build_ui()
+        self.CentreOnParent()
+
+    def _build_ui(self) -> None:
+        panel = wx.Panel(self)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        # Summary line at top — read immediately on focus by screen readers
+        total_confirmed = len(self._result.stands_by)
+        total_retracted = len(self._result.retracts)
+        total_added     = len(self._result.additions)
+        summary_text = (
+            f"Validation complete — "
+            f"{total_confirmed} confirmed, "
+            f"{total_retracted} retracted, "
+            f"{total_added} new."
+        )
+        summary_lbl = wx.StaticText(panel, label=summary_text)
+        summary_lbl.SetName("Validation summary")
+        summary_lbl.SetFont(summary_lbl.GetFont().Bold())
+        sizer.Add(summary_lbl, 0, wx.ALL, 12)
+        sizer.Add(wx.StaticLine(panel), 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 12)
+
+        # Three sections
+        sections = [
+            ("[confirmed]", "Stands By",  self._result.stands_by,
+             wx.Colour(220, 245, 220), wx.Colour(30, 120, 30)),
+            ("[retracted]", "Retracts",   self._result.retracts,
+             wx.Colour(250, 225, 220), wx.Colour(160, 30, 30)),
+            ("[new]",       "Additions",  self._result.additions,
+             wx.Colour(220, 230, 250), wx.Colour(30, 60, 160)),
+        ]
+
+        for symbol, label, items, bg_color, fg_color in sections:
+            # Section container
+            sec = wx.Panel(panel)
+            sec.SetBackgroundColour(bg_color)
+            sp = wx.BoxSizer(wx.VERTICAL)
+
+            # Header — bold, colored, with text symbol prefix (WCAG 1.4.1)
+            hdr_text = f"{symbol}  {label} ({len(items)})"
+            hdr = wx.StaticText(sec, label=hdr_text)
+            hdr.SetFont(hdr.GetFont().Bold())
+            hdr.SetForegroundColour(fg_color)
+            hdr.SetName(f"Validation section: {label}, {len(items)} items")
+            sp.Add(hdr, 0, wx.ALL, 8)
+
+            if items:
+                lst = wx.ListCtrl(
+                    sec,
+                    style=wx.LC_REPORT | wx.LC_NO_HEADER | wx.BORDER_SIMPLE,
+                )
+                lst.SetName(f"{label} items")
+                lst.InsertColumn(0, label, width=560)
+                for i, item in enumerate(items):
+                    lst.InsertItem(i, item.text)
+                lst.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+                row_h = lst.GetItemRect(0).height if items else 24
+                lst.SetMinSize((-1, min(row_h * len(items) + 4, 160)))
+                sp.Add(lst, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+            else:
+                none_lbl = wx.StaticText(sec, label="(none)")
+                none_lbl.SetForegroundColour(wx.Colour(100, 100, 100))
+                sp.Add(none_lbl, 0, wx.LEFT | wx.BOTTOM, 12)
+
+            sec.SetSizer(sp)
+            sizer.Add(sec, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 8)
+
+        sizer.AddStretchSpacer()
+        sizer.Add(wx.StaticLine(panel), 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 12)
+
+        close_btn = wx.Button(panel, wx.ID_CLOSE, "Close")
+        close_btn.SetName("Close validation result dialog")
+        close_btn.SetToolTip("Close this dialog (Escape)")
+        close_btn.Bind(wx.EVT_BUTTON, lambda _e: self.EndModal(wx.ID_CLOSE))
+        sizer.Add(close_btn, 0, wx.ALIGN_RIGHT | wx.ALL, 12)
+
+        panel.SetSizer(sizer)
+
+        # Escape key closes the dialog (standard modal behaviour)
+        self.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
+        # Move focus to the summary so screen readers announce it immediately
+        summary_lbl.SetFocus()
+
+    def _on_char_hook(self, event: wx.KeyEvent) -> None:
+        if event.GetKeyCode() == wx.WXK_ESCAPE:
+            self.EndModal(wx.ID_CLOSE)
+        else:
+            event.Skip()
