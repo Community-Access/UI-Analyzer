@@ -5,21 +5,38 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>UI Analyzer &mdash; Developer Guide</title>
 <style>
-.skip-link{position:absolute;top:-100%;left:1rem;padding:.5rem 1rem;background:#0071e3;color:#fff;border-radius:0 0 6px 6px;font-size:.9rem;font-weight:600;text-decoration:none;z-index:9999}
-.skip-link:focus{top:0}
+/* ── Reset ───────────────────────────────────────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* ── Skip link ───────────────────────────────────────────────────────────── */
+.skip-link{position:absolute;top:-100%;left:1rem;padding:.5rem 1rem;background:#0059b3;color:#fff;border-radius:0 0 6px 6px;font-size:.9rem;font-weight:600;text-decoration:none;z-index:9999}
+.skip-link:focus{top:0}
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:1rem;line-height:1.7;color:#1d1d1f;background:#f5f5f7}
 .wrapper{max-width:900px;margin:0 auto;padding:2rem 1.5rem 4rem}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
 header{background:#1d1d1f;color:#f5f5f7;padding:2rem 1.5rem}
 header .inner{max-width:900px;margin:0 auto}
 header h1{font-size:2rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.25rem}
-header p.subtitle{color:#afafaf;font-size:1rem}
-nav{background:#fff;border-bottom:1px solid #d2d2d7;position:sticky;top:0;z-index:100}
-nav .inner{max-width:900px;margin:0 auto;padding:0 1.5rem;display:flex;flex-wrap:wrap;gap:.25rem}
-nav a{display:inline-block;padding:.65rem .75rem;color:#0071e3;text-decoration:none;font-size:.875rem;border-bottom:2px solid transparent}
-nav a:hover{border-bottom-color:#0071e3}
-nav a:focus{outline:3px solid #0071e3;outline-offset:-1px;border-radius:4px}
-.card{background:#fff;border-radius:12px;padding:1.75rem 2rem;margin-bottom:1.5rem;border:1px solid #d2d2d7}
+/* #767676 on #1d1d1f ≈ 4.7:1 — meets WCAG AA normal text */
+header p.subtitle{color:#a0a0a6;font-size:1rem}
+
+/* ── Sticky nav ──────────────────────────────────────────────────────────── */
+nav{background:#fff;border-bottom:1px solid #b0b0b5;position:sticky;top:0;z-index:100}
+nav .inner{max-width:900px;margin:0 auto;padding:0 1.5rem;display:flex;flex-wrap:wrap;gap:.25rem;align-items:center}
+/* #0059b3 on #fff ≈ 6.5:1 — meets WCAG AA; min-height 44px per WCAG 2.5.5 */
+nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 .75rem;color:#0059b3;text-decoration:none;font-size:.875rem;border-bottom:3px solid transparent;transition:border-color .15s}
+nav a:hover{border-bottom-color:#0059b3}
+nav a:focus-visible{outline:3px solid #0059b3;outline-offset:-1px;border-radius:4px}
+/* Active section: bold + underline, not colour alone (WCAG 1.4.1) */
+nav a[aria-current="location"]{border-bottom-color:#0059b3;font-weight:600}
+
+/* ── Cards ───────────────────────────────────────────────────────────────── */
+.card{background:#fff;border-radius:12px;padding:1.75rem 2rem;margin-bottom:1.5rem;border:1px solid #b0b0b5}
+
+/* ── Typography ──────────────────────────────────────────────────────────── */
 h2{font-size:1.4rem;font-weight:700;margin-bottom:1rem;color:#1d1d1f;letter-spacing:-.01em}
 h3{font-size:1.1rem;font-weight:600;margin:1.25rem 0 .5rem;color:#1d1d1f}
 h4{font-size:1rem;font-weight:600;margin:1rem 0 .4rem;color:#3a3a3c}
@@ -27,38 +44,87 @@ p{margin-bottom:.9rem}
 p:last-child{margin-bottom:0}
 ul,ol{padding-left:1.5rem;margin-bottom:.9rem}
 li{margin-bottom:.35rem}
+
+/* ── Code ────────────────────────────────────────────────────────────────── */
 pre{background:#1c1c1e;color:#f5f5f7;border-radius:8px;padding:1.1rem 1.25rem;overflow-x:auto;margin-bottom:.9rem;font-size:.875rem;line-height:1.6}
-code{font-family:"SF Mono","Fira Code",Menlo,monospace;font-size:.875em;background:#f0f0f5;padding:.1em .35em;border-radius:4px;color:#1d1d1f}
+/* #e0e0ea bg on #fff ≈ 1.5:1 — still low but more visible than #f0f0f5;
+   text is #1d1d1f on #e0e0ea ≈ 12:1 ✓ */
+code{font-family:"SF Mono","Fira Code",Menlo,monospace;font-size:.875em;background:#e0e0ea;padding:.1em .35em;border-radius:4px;color:#1d1d1f}
 pre code{background:transparent;padding:0;color:inherit;font-size:1em}
-kbd{display:inline-block;padding:.15em .4em;font-size:.8em;font-family:"SF Mono",Menlo,monospace;border:1px solid #c6c6c8;border-radius:4px;background:#f2f2f7;color:#1d1d1f;white-space:nowrap;line-height:1.4}
+kbd{display:inline-block;padding:.15em .4em;font-size:.8em;font-family:"SF Mono",Menlo,monospace;border:1px solid #8e8e93;border-radius:4px;background:#e8e8f0;color:#1d1d1f;white-space:nowrap;line-height:1.4}
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
 .table-wrapper{overflow-x:auto;margin-bottom:.9rem}
 table{width:100%;border-collapse:collapse;font-size:.9375rem}
 caption{text-align:left;font-weight:600;font-size:.9rem;color:#3a3a3c;padding:0 0 .5rem}
-th{background:#f2f2f7;font-weight:600;text-align:left;padding:.6rem .9rem;border:1px solid #d2d2d7;white-space:nowrap}
-td{padding:.6rem .9rem;border:1px solid #d2d2d7;vertical-align:top}
-tr:nth-child(even) td{background:#fafafa}
-.note{background:#e8f0fe;border-left:4px solid #0071e3;padding:.9rem 1.1rem;border-radius:0 8px 8px 0;margin-bottom:.9rem;font-size:.9375rem}
-.warning{background:#fff3e0;border-left:4px solid #ff9500;padding:.9rem 1.1rem;border-radius:0 8px 8px 0;margin-bottom:.9rem;font-size:.9375rem}
-a:focus,button:focus{outline:3px solid #0071e3;outline-offset:2px;border-radius:3px}
+th{background:#e8e8f0;font-weight:600;text-align:left;padding:.6rem .9rem;border:1px solid #b0b0b5;white-space:nowrap}
+td{padding:.6rem .9rem;border:1px solid #b0b0b5;vertical-align:top}
+/* #ededf2 on #fff ≈ 1.15:1 — still low for non-text; improve to ~1.3:1 */
+tr:nth-child(even) td{background:#eeeef3}
+
+/* ── Callouts ────────────────────────────────────────────────────────────── */
+/* Darker tinted backgrounds improve visibility against the page gray.
+   Text is inherited (#1d1d1f) which meets AA on both backgrounds.         */
+.note{background:#cfe2ff;border-left:4px solid #0059b3;padding:.9rem 1.1rem;border-radius:0 8px 8px 0;margin-bottom:.9rem;font-size:.9375rem}
+/* #1d1d1f on #d6f0e8 ≈ 14:1 ✓; border #00704f on white ≈ 6.1:1 ✓ */
+.warning{background:#d6f0e8;border-left:4px solid #00704f;padding:.9rem 1.1rem;border-radius:0 8px 8px 0;margin-bottom:.9rem;font-size:.9375rem}
+
+/* ── Focus ───────────────────────────────────────────────────────────────── */
+a:focus-visible,button:focus-visible{outline:3px solid #0059b3;outline-offset:2px;border-radius:3px}
+
+/* ── Back-to-top button ──────────────────────────────────────────────────── */
+#back-to-top{position:fixed;bottom:2rem;right:2rem;z-index:200;
+  padding:.6rem 1rem;background:#0059b3;color:#fff;border:none;
+  border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,.25);
+  opacity:0;pointer-events:none;transition:opacity .2s}
+#back-to-top.visible{opacity:1;pointer-events:auto}
+#back-to-top:focus-visible{outline:3px solid #fff;outline-offset:2px}
+
+/* ── Motion safety ───────────────────────────────────────────────────────── */
+@media(prefers-reduced-motion:reduce){
+  nav a,#back-to-top{transition:none}
+}
+
+/* ── Dark mode ───────────────────────────────────────────────────────────── */
 @media(prefers-color-scheme:dark){
   body{color:#f5f5f7;background:#000}
   header{background:#161617}
-  header p.subtitle{color:#8e8e93}
-  nav{background:#1c1c1e;border-bottom-color:#38383a}
-  nav a{color:#2997ff}
-  nav a:hover{border-bottom-color:#2997ff}
-  nav a:focus{outline-color:#2997ff}
-  .card{background:#1c1c1e;border-color:#38383a}
+  /* #a0a0a6 on #161617 ≈ 5.2:1 ✓ */
+  header p.subtitle{color:#a0a0a6}
+  nav{background:#1c1c1e;border-bottom-color:#48484a}
+  /* #6eb3ff on #1c1c1e ≈ 5.3:1 ✓ */
+  nav a{color:#6eb3ff}
+  nav a:hover,nav a[aria-current="location"]{border-bottom-color:#6eb3ff}
+  nav a:focus-visible{outline-color:#6eb3ff}
+  .card{background:#1c1c1e;border-color:#48484a}
   h2,h3,h4{color:#f5f5f7}
-  code{background:#2c2c2e;color:#f5f5f7}
-  kbd{background:#2c2c2e;border-color:#48484a;color:#f5f5f7}
-  th{background:#2c2c2e;border-color:#38383a}
-  td{border-color:#38383a}
-  tr:nth-child(even) td{background:#232325}
+  /* #3c3c42 on #1c1c1e ≈ 1.6:1 — marginally more visible than #2c2c2e */
+  code{background:#3c3c42;color:#f5f5f7}
+  kbd{background:#3c3c42;border-color:#636366;color:#f5f5f7}
   caption{color:#ebebf5}
-  .note{background:#0a2a4a;border-left-color:#2997ff}
-  .warning{background:#2a1800;border-left-color:#ff9500}
-  a:focus,button:focus{outline-color:#2997ff}
+  th{background:#2c2c2e;border-color:#48484a;color:#f5f5f7}
+  td{border-color:#48484a}
+  /* #272729 on #1c1c1e ≈ 1.2:1 — zebra rows barely visible in dark; leave for now */
+  tr:nth-child(even) td{background:#272729}
+  /* Note: #102244 on #000 ≈ 1.4:1; text (#f5f5f7 on #102244) ≈ 12:1 ✓
+     Still low bg/bg contrast but noticeably better than #0a2a4a          */
+  .note{background:#102244;border-left-color:#6eb3ff;color:#f5f5f7}
+  /* Warning: #3d2000 on #000 ≈ 1.5:1; text ≈ 12:1 ✓                     */
+  /* #f5f5f7 on #0d2e22 ≈ 13.5:1 ✓; border #4dc99a on black ≈ 10.1:1 ✓ */
+  .warning{background:#0d2e22;border-left-color:#4dc99a;color:#f5f5f7}
+  a:focus-visible,button:focus-visible{outline-color:#6eb3ff}
+  #back-to-top{background:#6eb3ff;color:#000}
+  #back-to-top:focus-visible{outline-color:#000}
+}
+
+/* ── Forced colours (Windows High Contrast) ──────────────────────────────── */
+@media(forced-colors:active){
+  .note,.warning{border-left:4px solid Highlight;background:Canvas;color:CanvasText}
+  th{background:ButtonFace;border-color:ButtonText}
+  td{border-color:ButtonText}
+  nav a[aria-current="location"]{border-bottom-color:Highlight}
+  #back-to-top{forced-color-adjust:none;background:Highlight;color:HighlightText}
 }
 </style>
 </head>
@@ -75,17 +141,24 @@ a:focus,button:focus{outline:3px solid #0071e3;outline-offset:2px;border-radius:
     <a href="#introduction">Introduction</a>
     <a href="#features">Features</a>
     <a href="#tech-stack">Tech stack</a>
-    <a href="#ollama">Ollama integration</a>
+    <a href="#ollama">Ollama</a>
     <a href="#file-structure">File structure</a>
     <a href="#architecture">Architecture</a>
-    <a href="#threading">Threading model</a>
+    <a href="#threading">Threading</a>
     <a href="#image-analysis">Image analysis</a>
-    <a href="#drag-drop">Drag and drop</a>
+    <a href="#vision-pipeline">Vision pipeline</a>
+    <a href="#attachment">Attachment</a>
+    <a href="#validate">Validate</a>
+    <a href="#framework-apis">Framework APIs</a>
+    <a href="#contrast-advisor">Contrast advisor</a>
+    <a href="#session-rolling">Sessions</a>
+    <a href="#design-spec">Design specs</a>
+    <a href="#drag-drop">Drag &amp; drop</a>
     <a href="#prompt-routing">Prompt routing</a>
     <a href="#accessibility">Accessibility</a>
     <a href="#shortcuts">Shortcuts</a>
-    <a href="#gotchas">Known gotchas</a>
-    <a href="#build">Run instructions</a>
+    <a href="#gotchas">Gotchas</a>
+    <a href="#build">Run</a>
   </div>
 </nav>
 <div class="wrapper">
@@ -101,16 +174,21 @@ a:focus,button:focus{outline:3px solid #0071e3;outline-offset:2px;border-radius:
 <section class="card" id="features" aria-labelledby="h-features">
   <h2 id="h-features">Feature overview</h2>
   <ul>
-    <li><strong>File analysis</strong> &mdash; Analyze Swift, SwiftUI, Storyboard, XIB, HTML, CSS, React/JSX, Vue, Svelte, Python, JavaScript, TypeScript, and Markdown files from a project folder.</li>
-    <li><strong>Image / screenshot analysis</strong> &mdash; PNG, JPG, HEIC, WebP, TIFF, BMP, GIF files up to 10 MB. Uses Tesseract OCR + Pillow for text extraction, then Ollama for description.</li>
-    <li><strong>Design spec analysis</strong> &mdash; Markdown files are automatically recognized as design specs and get a color/typography/component-focused output.</li>
-    <li><strong>Output modes</strong> &mdash; Prose (5-section Markdown), Markdown table, or fully accessible HTML5 table rendered in an AccessibleWebView (NVDA / JAWS / Narrator / VoiceOver compatible).</li>
-    <li><strong>Follow-up questions</strong> &mdash; Persistent conversation per file with rolling context window.</li>
-    <li><strong>Project context</strong> &mdash; Summarizes all files so cross-screen questions work.</li>
-    <li><strong>Drag and drop</strong> &mdash; Drop folders anywhere in the sidebar from File Explorer or Finder.</li>
-    <li><strong>Model picker</strong> &mdash; Lists all installed Ollama models with capability descriptions and "recommended for current file type" markers.</li>
-    <li><strong>Custom app icon</strong> &mdash; Bundled <code>assets/app_icon.png</code> shown in the window title bar and Windows taskbar at runtime.</li>
-    <li><strong>WCAG 2.2 AA accessible</strong> &mdash; Every interactive control has an accessible name, every button is at least 44&times;44, every dialog is keyboard-operable, and every screen reader can read every screen.</li>
+    <li><strong>File analysis</strong> &mdash; Analyze Swift, SwiftUI, Storyboard, XIB, HTML, CSS, React/JSX, Vue, Svelte, Python, JavaScript, TypeScript, and Markdown files. Six-section output covers visual appearance, usability, professional quality, accessibility, other details, and screen layout.</li>
+    <li><strong>Design spec analysis</strong> &mdash; Non-readme Markdown files are detected as design specs and routed to a color/typography/component-focused prompt covering the full token vocabulary.</li>
+    <li><strong>Image / screenshot analysis</strong> &mdash; PNG, JPG, HEIC, WebP, TIFF, BMP, GIF up to 10&nbsp;MB. Pillow measures dimensions; Tesseract OCR extracts text with positional labels; Ollama describes the screen.</li>
+    <li><strong>Screenshot attachment</strong> &mdash; Any source file can have a <code>.context.png</code> screenshot attached. The screenshot is stored in the project folder and the binding is persisted in the platform user-data dir via <code>platformdirs</code>. Once attached, every analysis includes the screenshot via the vision pipeline.</li>
+    <li><strong>Vision pipeline with automatic OCR fallback</strong> &mdash; Multimodal models receive image bytes directly (<code>VisionMode.MULTIMODAL</code>). If the model rejects images with a 400 error, Tesseract OCR runs on the screenshot and the transcript is injected as text (<code>VisionMode.OCR_TEXT</code>).</li>
+    <li><strong>Validate against screenshot</strong> &mdash; Sends the prior analysis + attached screenshot to the model and asks it to stand by, retract, or extend each claim. Returns a structured <code>ValidationResult</code> with three lists. Presented in an accessible dialog with Copy support.</li>
+    <li><strong>Framework-specific API references</strong> &mdash; Content-first detection picks one of twelve framework API reference strings (SwiftUI, React, React Native, Vue, HTML, wxPython, PyQt6, tkinter, WinForms, WPF, .NET MAUI, Avalonia) and injects it into the prompt so suggestions are actionable, not generic.</li>
+    <li><strong>Automated contrast advisor</strong> &mdash; Extracts all hex colors from source, computes WCAG ratios, flags failures, and suggests fixes &mdash; all before the model sees the file, so the model can cite precise numbers.</li>
+    <li><strong>Output modes</strong> &mdash; Prose (six-section Markdown with navigable headings), Markdown table, or a full accessible HTML5 document with TL;DR summary, element table, and layout table.</li>
+    <li><strong>Follow-up questions</strong> &mdash; Persistent per-file conversation with automatic context rolling at 12,000 chars.</li>
+    <li><strong>Project context</strong> &mdash; Generates 4-line summaries of all files so cross-screen questions work without re-analyzing. Project Q&amp;A answers are formatted as HTML fragments with heading structure for NVDA/JAWS navigation.</li>
+    <li><strong>Drag and drop</strong> &mdash; Drop folders from File Explorer or Finder onto the sidebar to load a project.</li>
+    <li><strong>AI provider abstraction</strong> &mdash; <code>AIClient</code> protocol with three concrete implementations: <code>OllamaClient</code> (local), <code>AnthropicClient</code> (cloud), <code>OpenAIClient</code> (cloud). Switching providers requires only a config change, no code changes.</li>
+    <li><strong>WCAG 2.2 AA accessible</strong> &mdash; Every control has an accessible name (<code>SetName</code>), every button is 44&times;44&nbsp;px minimum, every dialog is keyboard-operable, and every screen reader (NVDA, JAWS, Narrator, VoiceOver) can read every screen.</li>
+    <li><strong>Cross-platform</strong> &mdash; Windows 10/11 (Edge WebView2) and macOS 14+ (WebKit). Same codebase, same keyboard shortcuts (<code>event.CmdDown()</code> for Ctrl/Cmd), same feature set.</li>
   </ul>
 </section>
 
@@ -249,6 +327,264 @@ a:focus,button:focus{outline:3px solid #0071e3;outline-offset:2px;border-radius:
   </ol>
   <p>Ollama does not receive image pixel data directly &mdash; only structured text. Text-heavy screens work very well. Icon-heavy screens with no labels are harder; the model works from position information alone.</p>
   <div class="note">If Tesseract is not installed, <code>pytesseract</code> raises a clear error at runtime. The scanner still picks up image files; the user just gets an error when they try to analyze one. The error pane in <code>DetailPanel</code> shows the missing-binary message.</div>
+</section>
+
+<!-- ── Vision analysis pipeline ───────────────────────────────────────────── -->
+<section class="card" id="vision-pipeline" aria-labelledby="h-vision">
+  <h2 id="h-vision">Vision analysis pipeline</h2>
+  <p>When a screenshot is <strong>attached</strong> to a source file (see <a href="#attachment">Screenshot attachment</a>), the analysis pipeline tries three strategies in order, automatically falling back if the model does not support the previous strategy:</p>
+  <ol>
+    <li><strong>Multimodal (MULTIMODAL)</strong> &mdash; The screenshot is base64-encoded and sent in the <code>images</code> field of the Ollama chat message alongside the source code. Vision-capable models (e.g., <code>llama3.2-vision</code>) receive the raw image pixels and can see the actual rendered UI. <code>VisionMode.MULTIMODAL</code> is recorded on the returned <code>UIAnalysis</code>.</li>
+    <li><strong>OCR text fallback (OCR_TEXT)</strong> &mdash; If the model returns an HTTP 400 or mentions "images" in the error, the pipeline removes the image from the message, runs Tesseract OCR on the screenshot, and injects the resulting text transcript into the prompt. <code>VisionMode.OCR_TEXT</code> is recorded. This works well for text-heavy screens even with text-only models.</li>
+    <li><strong>Text only (NOT_ATTACHED)</strong> &mdash; No screenshot. The model sees only the source code. <code>VisionMode.NOT_ATTACHED</code>.</li>
+  </ol>
+  <p>The <code>VisionMode</code> enum lives in <code>ui_analyzer/models/ui_file.py</code>. The pipeline is implemented in <code>UIAnalyzer._run_analysis()</code>:</p>
+  <pre role="region" aria-label="Vision pipeline code"><code>class VisionMode(Enum):
+    NOT_ATTACHED = "not_attached"
+    MULTIMODAL   = "multimodal"   # model receives raw image bytes
+    OCR_TEXT     = "ocr_text"     # text-only model, OCR transcript injected</code></pre>
+  <pre role="region" aria-label="Fallback logic in _run_analysis"><code># Attach screenshot to the user turn when present
+vision_mode = VisionMode.NOT_ATTACHED
+if screenshot_data:
+    b64 = base64.b64encode(screenshot_data).decode()
+    multimodal_msg = {
+        "role": "user",
+        "content": prompt + "\n\nA screenshot of this UI is attached.",
+        "images": [b64],
+    }
+    session.messages.append(multimodal_msg)
+    vision_mode = VisionMode.MULTIMODAL
+else:
+    session.add_user(prompt)
+
+# ... stream the response, then on HTTP 400 "images" error:
+if screenshot_data and vision_mode == VisionMode.MULTIMODAL and (
+    "400" in str(exc) or "images" in str(exc).lower()
+):
+    session.messages = [m for m in session.messages if m.get("images") is None]
+    ocr_suffix = _build_ocr_suffix(screenshot_data)
+    session.add_user(prompt + ocr_suffix)
+    vision_mode = VisionMode.OCR_TEXT
+    # retry stream ...</code></pre>
+  <div class="note">The fallback is automatic and transparent to the user. A notification announces the result ("Analysis complete") regardless of which strategy was used. The <code>vision_mode</code> field on <code>UIAnalysis</code> records which path was taken for debugging.</div>
+</section>
+
+<!-- ── Screenshot attachment ──────────────────────────────────────────────── -->
+<section class="card" id="attachment" aria-labelledby="h-attachment">
+  <h2 id="h-attachment">Screenshot attachment</h2>
+  <p>A screenshot can be attached to any source file. Once attached, it travels with the file through analysis and validation. The binding is persisted across sessions in a JSON file in the platform user-data directory.</p>
+
+  <h3>Naming convention</h3>
+  <p>Attachments are stored at the root of the scanned folder with the name <code>sourcefile.context.png</code>. For example, attaching a screenshot to <code>LoginView.swift</code> creates <code>LoginView.swift.context.png</code> in the same folder. This makes the attachment visible in the sidebar as a scanner item and keeps it co-located with the source.</p>
+
+  <h3>AttachmentStore</h3>
+  <p><code>ui_analyzer/services/attachment_store.py</code> owns the persistence layer. The binding is a JSON map from <code>relative_path</code> to <code>attachment_filename</code>, written to a per-user data directory via <code>platformdirs</code>:</p>
+  <pre role="region" aria-label="AttachmentStore path logic"><code>import platformdirs
+
+def _store_path() -> Path:
+    return Path(platformdirs.user_data_dir("UIAnalyzer")) / "attachments.json"
+# Windows : %LOCALAPPDATA%\UIAnalyzer\attachments.json
+# macOS   : ~/Library/Application Support/UIAnalyzer/attachments.json</code></pre>
+  <p>Key functions:</p>
+  <ul>
+    <li><code>attachment_filename(source_name)</code> &mdash; returns the <code>.context.png</code> filename for a given source file name.</li>
+    <li><code>looks_like_attachment(name)</code> &mdash; returns <code>True</code> if a filename ends with <code>.context.png</code>. Used by the file scanner to exclude attachment files from the UI file list.</li>
+    <li><code>set_attachment(attachment_name, for_relative_path)</code> &mdash; binds or clears a binding. Pass <code>None</code> as <code>attachment_name</code> to clear.</li>
+    <li><code>lookup_attachment(relative_path)</code> &mdash; looks up the attachment filename for a source file's relative path, or returns <code>None</code>.</li>
+  </ul>
+
+  <h3>UIFile integration</h3>
+  <p><code>UIFile.attached_image_path</code> holds the relative path of the attachment from the scanned folder root. <code>UIFile.screenshot_abs_path</code> is a property that resolves it to an absolute path:</p>
+  <pre role="region" aria-label="UIFile screenshot resolution"><code>@property
+def screenshot_abs_path(self) -> Optional[Path]:
+    if self.attached_image_path and self.folder_path:
+        return self.folder_path / self.attached_image_path
+    return None</code></pre>
+  <p><code>UIAnalyzer.analyze()</code> calls <code>screenshot_abs_path</code> to load the image bytes before building the prompt. If the path is <code>None</code> or the file does not exist, analysis proceeds without any image.</p>
+</section>
+
+<!-- ── Validate against screenshot ────────────────────────────────────────── -->
+<section class="card" id="validate" aria-labelledby="h-validate">
+  <h2 id="h-validate">Validate against screenshot</h2>
+  <p>Validation cross-checks a prior text analysis against a real screenshot of the same screen. It asks the model to review what it said and categorise each claim as confirmed, retracted, or newly observed. This catches cases where the model made an incorrect inference from source code alone.</p>
+
+  <h3>How it works</h3>
+  <ol>
+    <li><code>DetailPanel</code> calls <code>UIAnalyzer.validate_against_screenshot(file, prior_analysis)</code> on a background thread.</li>
+    <li>The method strips HTML tags from the prior analysis (if HTML mode was used), then calls <code>_build_validation_prompt</code> to produce a prompt containing the prior analysis text.</li>
+    <li>The prompt and the screenshot bytes are sent to the model via <code>_run_validation()</code>, which tries multimodal first and falls back to OCR text if the model rejects the image.</li>
+    <li>The model returns a JSON object. <code>_parse_validation_json()</code> parses it into a <code>ValidationResult</code>.</li>
+  </ol>
+
+  <h3>ValidationResult data model</h3>
+  <pre role="region" aria-label="ValidationResult dataclass"><code>@dataclass
+class ValidationClaim:
+    text: str
+
+@dataclass
+class ValidationRetraction:
+    text: str
+    original_index: Optional[int] = None  # 1-based paragraph number
+
+@dataclass
+class ValidationResult:
+    stands_by: list[ValidationClaim]    # claims confirmed by the screenshot
+    retracts:  list[ValidationRetraction]  # claims contradicted or misleading
+    additions: list[ValidationClaim]    # new facts only visible in the screenshot</code></pre>
+
+  <h3>The validation prompt and system instructions</h3>
+  <p>The model is given strict output rules via <code>_VALIDATION_SYSTEM_PROMPT</code>:</p>
+  <pre role="region" aria-label="Validation prompt structure"><code>_VALIDATION_SYSTEM_PROMPT = """\
+You are a UI accessibility and visual design expert.
+...
+Return ONLY the JSON object:
+{
+  "stands_by":  ["claim still true", ...],
+  "retracts":   ["claim that was wrong or misleading", ...],
+  "additions":  ["new observation only visible in the screenshot", ...]
+}
+"""</code></pre>
+
+  <h3>JSON parsing and fault tolerance</h3>
+  <p><code>_parse_validation_json(raw)</code> handles malformed responses gracefully:</p>
+  <ul>
+    <li>Strips Markdown fences (<code>```json ... ```</code>) that models sometimes add despite the instructions.</li>
+    <li>Falls back to regex extraction of the first <code>{...}</code> block if standard JSON parsing fails.</li>
+    <li>Returns an empty <code>ValidationResult</code> if all parsing fails, so the UI always gets a valid object.</li>
+  </ul>
+
+  <h3>ValidationResultDialog</h3>
+  <p>The result is presented in <code>ValidationResultDialog</code> inside <code>detail_panel.py</code>. Key accessibility properties:</p>
+  <ul>
+    <li>Three labeled sections as <code>wx.StaticText</code> headings: <strong>Stands By</strong>, <strong>Retracts</strong>, <strong>Additions</strong>. Each section heading uses <code>SetFont(bold)</code> and <code>SetName()</code> so NVDA/JAWS announce it as a heading-like separator.</li>
+    <li>Each claim is a separate <code>wx.StaticText</code> item so screen readers read each bullet individually.</li>
+    <li>A <strong>Copy</strong> button and <kbd>Ctrl C</kbd> shortcut copy the full result as formatted plain text via <code>_build_plain_text()</code>.</li>
+    <li>A <strong>Close</strong> button and <kbd>Escape</kbd> dismiss the dialog and return focus to the detail panel.</li>
+  </ul>
+</section>
+
+<!-- ── Framework API reference injection ──────────────────────────────────── -->
+<section class="card" id="framework-apis" aria-labelledby="h-fwk-apis">
+  <h2 id="h-fwk-apis">Framework API reference injection</h2>
+  <p>Before building any analysis prompt, <code>UIAnalyzer._build_prompt()</code> calls <code>_framework_api_ref(content, file_type)</code> to choose one of eleven framework-specific accessibility reference strings. The chosen reference is injected into the prompt so the model suggests concrete, API-specific fixes rather than generic WCAG advice.</p>
+
+  <h3>Detection logic</h3>
+  <p>Detection is <strong>content-first</strong>: the function reads the file's import declarations before looking at the extension. This ensures a <code>.py</code> file importing <code>tkinter</code> gets the tkinter reference (with its limited screen-reader-support caveat), and a <code>.xaml</code> file with the WPF XML namespace gets the WPF reference rather than a MAUI or Avalonia one.</p>
+  <pre role="region" aria-label="Framework detection order"><code>def _framework_api_ref(content: str, file_type: UIFileType) -> str:
+    if "import SwiftUI" in content:                       return _SWIFTUI_APIS
+    if "react-native" in content:                         return _REACT_NATIVE_APIS
+    if "from 'react'" in content or "import React":      return _REACT_APIS
+    if "using System.Windows.Forms" in content:           return _WINFORMS_APIS
+    if "schemas.microsoft.com/winfx/2006/xaml":          return _WPF_APIS
+    if "schemas.microsoft.com/dotnet/2021/maui":         return _MAUI_APIS
+    if "github.com/avaloniaui" in content:                return _AVALONIA_APIS
+    if "from PyQt6" in content or "from PySide6":        return _PYQT_APIS
+    if "import tkinter" in content:                       return _TKINTER_APIS
+    if "import wx" in content or "from wx":              return _WXPYTHON_APIS
+    # fall back to file_type enum ...
+    return ""</code></pre>
+  <p>The available reference strings are defined as module-level constants in <code>ui_analyzer/services/ui_analyzer.py</code>:</p>
+  <div class="table-wrapper">
+    <table>
+      <caption>Framework API reference strings</caption>
+      <thead>
+        <tr><th scope="col">Constant</th><th scope="col">Framework</th><th scope="col">Key APIs covered</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>_SWIFTUI_APIS</code></td><td>SwiftUI</td><td><code>.accessibilityLabel</code>, <code>@AccessibilityFocusState</code>, <code>.frame(minWidth:44)</code>, <code>AccessibilityNotification</code></td></tr>
+        <tr><td><code>_REACT_APIS</code></td><td>React / JSX</td><td><code>aria-label</code>, <code>aria-live</code>, <code>useRef + focus()</code>, semantic HTML, touch targets</td></tr>
+        <tr><td><code>_REACT_NATIVE_APIS</code></td><td>React Native</td><td><code>accessibilityLabel</code>, <code>accessibilityRole</code>, <code>hitSlop</code>, <code>AccessibilityInfo.announceForAccessibility</code></td></tr>
+        <tr><td><code>_VUE_APIS</code></td><td>Vue / Svelte</td><td><code>:aria-label</code>, <code>aria-live</code>, <code>$refs.el.focus()</code>, <code>prefers-reduced-motion</code></td></tr>
+        <tr><td><code>_HTML_CSS_APIS</code></td><td>HTML / CSS</td><td>Semantic elements, <code>&lt;dialog&gt;</code>, ARIA, dark mode, touch targets</td></tr>
+        <tr><td><code>_WXPYTHON_APIS</code></td><td>wxPython</td><td><code>SetName</code>, <code>SetToolTip</code>, <code>wx.AcceleratorTable</code>, <code>wx.EVT_CHAR</code></td></tr>
+        <tr><td><code>_PYQT_APIS</code></td><td>PyQt6 / PySide6</td><td><code>setAccessibleName</code>, <code>setFocusPolicy</code>, <code>QShortcut</code></td></tr>
+        <tr><td><code>_TKINTER_APIS</code></td><td>tkinter</td><td><code>takefocus=True</code>, <code>bind("&lt;Return&gt;")</code>, ttk preference, <code>focus_set()</code></td></tr>
+        <tr><td><code>_WINFORMS_APIS</code></td><td>WinForms</td><td><code>AccessibleName</code>, <code>TabIndex</code>, <code>MinimumSize</code>, <code>ToolTip</code></td></tr>
+        <tr><td><code>_WPF_APIS</code></td><td>WPF</td><td><code>AutomationProperties.Name</code>, <code>FocusManager</code>, <code>AutomationPeer</code></td></tr>
+        <tr><td><code>_MAUI_APIS</code></td><td>.NET MAUI</td><td><code>SemanticProperties.Description</code>, <code>SemanticProperties.HeadingLevel</code>, <code>MinimumSizeRequest</code></td></tr>
+        <tr><td><code>_AVALONIA_APIS</code></td><td>Avalonia</td><td><code>AutomationProperties.Name</code>, <code>KeyboardNavigation.TabIndex</code>, <code>AutomationPeer</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>To add a new framework: write a <code>_NEWFW_APIS</code> constant with the relevant API reference text, then add a content-probe line in <code>_framework_api_ref</code> above the file-type fallback block.</p>
+</section>
+
+<!-- ── Contrast advisor ───────────────────────────────────────────────────── -->
+<section class="card" id="contrast-advisor" aria-labelledby="h-contrast">
+  <h2 id="h-contrast">Automated contrast advisor</h2>
+  <p><code>ui_analyzer/services/contrast_advisor.py</code> runs before the model sees the file. It extracts every <code>#RRGGBB</code> and <code>#RGB</code> hex color from the source text, computes the WCAG relative luminance for each, and compares every pair to find contrast failures.</p>
+  <p>The function <code>contrast_report(content: str) -&gt; str</code> returns a human-readable block (or an empty string if all colors pass). It is injected into the analysis prompt so the model can reference exact ratios and suggest specific fixes:</p>
+  <pre role="region" aria-label="Contrast report injection"><code>cr = contrast_report(content)
+if cr:
+    extra += cr + "\n\n"</code></pre>
+  <p>The report format the model receives looks like:</p>
+  <pre role="region" aria-label="Example contrast report output"><code>COLOR CONTRAST REPORT (auto-extracted from source):
+• #afafaf on #ffffff — ratio 2.22:1 (FAILS AA normal text 4.5:1)
+  → suggested fix: #767676 (ratio 4.61:1)
+• #0071e3 on #ffffff — ratio 3.62:1 (FAILS AA normal text; PASSES AA large text)
+  → suggested fix: #0059b3 (ratio 6.54:1)</code></pre>
+  <p>The model is instructed to cite these ratios verbatim in the Accessibility section of its output so the user gets precise numbers, not guesses.</p>
+</section>
+
+<!-- ── Session management and context rolling ─────────────────────────────── -->
+<section class="card" id="session-rolling" aria-labelledby="h-session">
+  <h2 id="h-session">Session management and context rolling</h2>
+  <p>Each file has its own <code>FileSession</code> object, stored in <code>UIAnalyzer._sessions[file_id]</code>. A session holds the full message history (system + user + assistant turns) so follow-up questions are aware of everything that was said earlier.</p>
+
+  <h3>FileSession</h3>
+  <pre role="region" aria-label="FileSession class"><code>class FileSession:
+    def __init__(self, file_id, file_name, file_type,
+                 content_prefix, mode, table_format):
+        self.messages: list[dict] = []   # full chat history
+        self.chars_exchanged = 0         # running total to trigger roll
+        self.content_prefix = content_prefix  # first 2,000 chars for re-anchoring
+        self.roll_count = 0</code></pre>
+
+  <h3>Context rolling</h3>
+  <p>Local models have a finite context window. When <code>chars_exchanged</code> exceeds <code>CONTEXT_BUDGET = 12_000</code>, the follow-up handler calls <code>_roll_context(file_id)</code> before sending the next question:</p>
+  <pre role="region" aria-label="Context rolling logic"><code>CONTEXT_BUDGET = 12_000  # chars before rolling
+
+def _roll_context(self, file_id: str) -> None:
+    s = self._sessions[file_id]
+    # 1. Ask the model to summarise the conversation so far
+    summary_prompt = (
+        "Summarise the key facts from our conversation about this UI in 4–6 sentences: "
+        "screen name/purpose, UI elements and labels, colours (name + hex), layout, "
+        "professional quality verdict, accessibility notes, and follow-up findings."
+    )
+    s.add_user(summary_prompt)
+    summary = self._client.respond(self.model, s.messages)
+
+    # 2. Replace the full history with: system + summary + file opening lines
+    sys_instructions += f"\n\nCONTEXT FROM EARLIER:\n{summary}\nFile: {s.file_name}"
+    s.messages = [
+        {"role": "system",    "content": sys_instructions},
+        {"role": "user",      "content": f"Continue our discussion...{s.content_prefix}"},
+        {"role": "assistant", "content": "Understood — continuing from where we left off."},
+    ]
+    s.chars_exchanged = len(summary)
+    s.roll_count += 1</code></pre>
+  <p>Rolling is transparent to the user: the conversation continues without interruption, and the compressed history keeps the model anchored to the original file content and earlier findings.</p>
+</section>
+
+<!-- ── Design spec detection ──────────────────────────────────────────────── -->
+<section class="card" id="design-spec" aria-labelledby="h-design">
+  <h2 id="h-design">Design specification detection</h2>
+  <p>Markdown files that are clearly design specifications get a different analysis prompt than ordinary Markdown documentation. The detection function is:</p>
+  <pre role="region" aria-label="Design spec detection"><code>def _is_design_spec(file_name: str, file_type: UIFileType) -> bool:
+    if file_type != UIFileType.MARKDOWN:
+        return False
+    skip = ("readme", "changelog", "contributing", "license", "history", "authors")
+    return not any(file_name.lower().startswith(s) for s in skip)</code></pre>
+  <p>Any Markdown file whose name does not start with one of the standard documentation keywords is treated as a design spec and routed to <code>_design_spec_prompt</code>, which asks the model to cover:</p>
+  <ol>
+    <li><strong>Color System</strong> &mdash; Every color defined with its name, hex, intended use, and WCAG contrast check.</li>
+    <li><strong>Typography</strong> &mdash; Every type style with family, weight, size, line-height, and usage.</li>
+    <li><strong>Spacing, Layout, and Grid</strong> &mdash; Spacing scale, grid system, breakpoints, and layout tokens.</li>
+    <li><strong>Components and Patterns</strong> &mdash; Every component with states (default, hover, active, disabled, error) and usage rules.</li>
+    <li><strong>Accessibility Design Decisions</strong> &mdash; Focus styles, contrast choices, touch targets, motion preferences, screen reader guidance.</li>
+  </ol>
+  <p>This prompt is used for files like <code>design.md</code>, <code>tokens.md</code>, or <code>style-guide.md</code> where the content is design token definitions rather than prose documentation.</p>
 </section>
 
 <section class="card" id="drag-drop" aria-labelledby="h-drag">
@@ -436,5 +772,54 @@ pyinstaller --onefile --windowed \
 
 </main>
 </div>
+
+<button id="back-to-top" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8679; Top</button>
+
+<script>
+(function(){
+  /* ── Back-to-top visibility ────────────────────────────────────────────── */
+  var btn = document.getElementById('back-to-top');
+  window.addEventListener('scroll', function(){
+    btn.classList.toggle('visible', window.scrollY > 300);
+  }, {passive:true});
+
+  /* ── ScrollSpy: mark active nav link with aria-current="location" ──────── */
+  var sections = Array.from(document.querySelectorAll('main section[id]'));
+  var navLinks = Array.from(document.querySelectorAll('nav a[href^="#"]'));
+  if (!sections.length || !navLinks.length) return;
+
+  function getLinkForSection(id){
+    return navLinks.find(function(a){ return a.getAttribute('href') === '#' + id; });
+  }
+
+  /* Build a map id → link for fast lookup */
+  var linkMap = {};
+  sections.forEach(function(s){ linkMap[s.id] = getLinkForSection(s.id); });
+
+  function markActive(id){
+    navLinks.forEach(function(a){
+      var isCurrent = a.getAttribute('href') === '#' + id;
+      if(isCurrent) a.setAttribute('aria-current','location');
+      else          a.removeAttribute('aria-current');
+    });
+  }
+
+  /* Use IntersectionObserver to pick the topmost visible section */
+  var visible = new Set();
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting) visible.add(e.target.id);
+      else                 visible.delete(e.target.id);
+    });
+    /* Choose the section earliest in DOM order */
+    for(var i=0; i < sections.length; i++){
+      if(visible.has(sections[i].id)){ markActive(sections[i].id); return; }
+    }
+  }, {rootMargin:'-20% 0px -60% 0px', threshold:0});
+
+  sections.forEach(function(s){ observer.observe(s); });
+})();
+</script>
+
 </body>
 </html>
