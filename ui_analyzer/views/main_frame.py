@@ -300,7 +300,11 @@ class MainFrame(wx.Frame):
 
     # ── Analysis ──────────────────────────────────────────────────────────────
 
-    def _trigger_analyze(self) -> None:
+    def _trigger_analyze(self, file: Optional[UIFile] = None) -> None:
+        if file is None:
+            file = self._current_file
+        if self._current_file is None and file is not None:
+            self._current_file = file
         if self._current_file:
             file = self._current_file
             # Read current mode/format from detail panel's choices
