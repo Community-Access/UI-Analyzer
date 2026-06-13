@@ -211,10 +211,12 @@ class MainFrame(wx.Frame):
     # ── Model selection ───────────────────────────────────────────────────────
 
     def _auto_select_model(self) -> None:
-        """Pick the first available model, or prompt if none installed."""
+        """Use the saved model if available, otherwise pick the first available."""
         models = self._client.list_models()
         if models:
-            self._model = models[0]["name"]
+            model_names = [m["name"] for m in models]
+            saved = self._config.get("model", "")
+            self._model = saved if saved in model_names else model_names[0]
             self._analyzer = UIAnalyzer(self._client, self._model)
             self._status.SetStatusText(f"Model: {self._model}", 1)
         elif not self._client.is_available():

@@ -47,13 +47,15 @@ class SettingsDialog(wx.Dialog):
         try:
             btn_sizer = wx.Sizer.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL)
         except AttributeError:
-            # Fallback for versions where this method is not available on the Sizer class
             btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
             btn_sizer.AddStretchSpacer()
             ok_btn = wx.Button(panel, wx.ID_OK, "OK")
             cancel_btn = wx.Button(panel, wx.ID_CANCEL, "Cancel")
             btn_sizer.Add(ok_btn, 0, wx.RIGHT, 12)
             btn_sizer.Add(cancel_btn, 0, wx.BOTTOM | wx.RIGHT, 12)
+
+        # Flush URL + model to config when OK is clicked
+        self.Bind(wx.EVT_BUTTON, self._on_ok, id=wx.ID_OK)
 
         sizer.Add(btn_sizer, 0, wx.EXPAND | wx.BOTTOM | wx.LEFT | wx.RIGHT, 12)
 
@@ -166,6 +168,14 @@ class SettingsDialog(wx.Dialog):
 
         panel.SetSizer(sizer)
         return panel
+
+    def _on_ok(self, event: wx.CommandEvent) -> None:
+        """Flush all pending field values to config before closing."""
+        self._config.set("ollama_url", self._url_field.GetValue().strip())
+        model = self._model_choice.GetStringSelection()
+        if model:
+            self._config.set("model", model)
+        event.Skip()  # let the default OK handler close the dialog
 
     def _on_provider_changed(self, _e) -> None:
         idx = self._provider_choice.GetSelection()

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import os
-import tempfile
 import threading
 import wx
 import wx.html2
@@ -336,7 +334,6 @@ class DetailPanel(wx.Panel):
         # AFTER the first page is fully loaded — calling it during init corrupts
         # the WebView on some EdgeWebView2 builds and causes the black screen.
         self._script_handler_registered = False
-        self._webview_tmp: Optional[str] = None   # path to last temp HTML file
         if hasattr(self._result_window, "Bind"):
             self._result_window.Bind(
                 wx.html2.EVT_WEBVIEW_LOADED,
@@ -602,24 +599,18 @@ class DetailPanel(wx.Panel):
         else:
             html = _md_to_html(content)
 
+        # Show the WebView BEFORE loading content — EdgeWebView2 does not
+        # render into a hidden control; calling SetPage/LoadURL while the
+        # panel is hidden produces a blank white pane when it becomes visible.
+        self._show_state("result")
+
         if _HAS_ACCESSIBLE_WV and hasattr(self._result_view, "set_content"):
             self._result_view.set_content(html)
-        elif hasattr(self._result_view, "LoadURL"):
-            # Write to a real temp file — EdgeWebView2 reliably renders file://
-            # URLs; SetPage(html, "about:blank") often produces a black screen.
-            try:
-                fd, path = tempfile.mkstemp(suffix=".html", prefix="uia_")
-                with os.fdopen(fd, "w", encoding="utf-8") as f:
-                    f.write(html)
-                self._webview_tmp = path
-                self._result_view.LoadURL(f"file:///{path.replace(chr(92), '/')}")
-            except Exception:
-                # Absolute last resort
-                self._result_view.SetPage(html, "")
         elif hasattr(self._result_view, "SetPage"):
-            self._result_view.SetPage(html, "")
-
-        self._show_state("result")
+            # SetPage works reliably now that background-color is explicit
+            # (#ffffff / #1c1c1e) — the previous black screen was caused by
+            # transparent backgrounds, not by the SetPage call itself.
+            self._result_view.SetPage(html, "about:blank")
 
     def _on_mode_change(self, _event: wx.CommandEvent) -> None:
         idx = self._mode_choice.GetSelection()
@@ -670,14 +661,6 @@ class DetailPanel(wx.Panel):
         # Move keyboard focus into the WebView so NVDA loads its virtual buffer
         # and the user can navigate headings with H immediately after analysis.
         self._result_window.SetFocus()
-
-        # Clean up previous temp file now that the new page is loaded
-        if self._webview_tmp:
-            try:
-                os.unlink(self._webview_tmp)
-            except OSError:
-                pass
-            self._webview_tmp = None
 
     def _on_webview_message(self, event: wx.html2.WebViewEvent) -> None:
         msg = event.GetString()
