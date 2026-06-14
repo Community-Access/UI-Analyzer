@@ -27,7 +27,8 @@ header p.subtitle{color:#a0a0a6;font-size:1rem}
 nav{background:#fff;border-bottom:1px solid #b0b0b5;position:sticky;top:0;z-index:100}
 nav .inner{max-width:900px;margin:0 auto;padding:0 1.5rem;display:flex;flex-wrap:wrap;gap:.25rem;align-items:center}
 /* #0059b3 on #fff ≈ 6.5:1 — meets WCAG AA; min-height 44px per WCAG 2.5.5 */
-nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 .75rem;color:#0059b3;text-decoration:none;font-size:.875rem;border-bottom:3px solid transparent;transition:border-color .15s}
+a{text-decoration:underline;text-underline-offset:2px}
+	nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 .75rem;color:#0059b3;text-decoration:none;font-size:.875rem;border-bottom:1px solid #b0b0b5;transition:border-color .15s}
 nav a:hover{border-bottom-color:#0059b3}
 nav a:focus-visible{outline:3px solid #0059b3;outline-offset:-1px;border-radius:4px}
 /* Active section: bold + underline, not colour alone (WCAG 1.4.1) */
@@ -77,8 +78,8 @@ a:focus-visible,button:focus-visible{outline:3px solid #0059b3;outline-offset:2p
   padding:.6rem 1rem;background:#0059b3;color:#fff;border:none;
   border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;
   box-shadow:0 2px 8px rgba(0,0,0,.25);
-  opacity:0;pointer-events:none;transition:opacity .2s}
-#back-to-top.visible{opacity:1;pointer-events:auto}
+  opacity:0;pointer-events:none;transition:opacity .2s;visibility:hidden}
+#back-to-top.visible{opacity:1;pointer-events:auto;visibility:visible}
 #back-to-top:focus-visible{outline:3px solid #fff;outline-offset:2px}
 
 /* ── Motion safety ───────────────────────────────────────────────────────── */
@@ -159,6 +160,7 @@ a:focus-visible,button:focus-visible{outline:3px solid #0059b3;outline-offset:2p
     <a href="#localhost">Localhost crawler</a>
     <a href="#shortcuts">Shortcuts</a>
     <a href="#gotchas">Gotchas</a>
+    <a href="#cli-tool">CLI Tool</a>
     <a href="#build">Run</a>
   </div>
 </nav>
@@ -175,7 +177,7 @@ a:focus-visible,button:focus-visible{outline:3px solid #0059b3;outline-offset:2p
 <section class="card" id="features" aria-labelledby="h-features">
   <h2 id="h-features">Feature overview</h2>
   <ul>
-    <li><strong>File analysis</strong> &mdash; Analyze Swift, SwiftUI, Storyboard, XIB, HTML, CSS, React/JSX, Vue, Svelte, Python, JavaScript, TypeScript, and Markdown files. Six-section output covers visual appearance, usability, professional quality, accessibility, other details, and screen layout.</li>
+    <li><strong>File analysis</strong> &mdash; Analyze HTML, CSS, React/JSX, Vue, Svelte, Python, JavaScript, TypeScript, and Markdown files. Six-section output covers visual appearance, usability, professional quality, accessibility, other details, and screen layout.</li>
     <li><strong>Design spec analysis</strong> &mdash; Non-readme Markdown files are detected as design specs and routed to a color/typography/component-focused prompt covering the full token vocabulary.</li>
     <li><strong>Image / screenshot analysis</strong> &mdash; PNG, JPG, HEIC, WebP, TIFF, BMP, GIF up to 10&nbsp;MB. Pillow measures dimensions; Tesseract OCR extracts text with positional labels; Ollama describes the screen.</li>
     <li><strong>Screenshot attachment</strong> &mdash; Any source file can have a <code>.context.png</code> screenshot attached. The screenshot is stored in the project folder and the binding is persisted in the platform user-data dir via <code>platformdirs</code>. Once attached, every analysis includes the screenshot via the vision pipeline.</li>
@@ -206,16 +208,16 @@ a:focus-visible,button:focus-visible{outline:3px solid #0059b3;outline-offset:2p
         </tr>
       </thead>
       <tbody>
-        <tr><td>Platform</td><td>Windows 10/11, macOS 14+</td><td>Linux works for dev but is untested</td></tr>
-        <tr><td>GUI toolkit</td><td>wxPython 4.2+</td><td>Cross-platform; native widgets on every OS</td></tr>
-        <tr><td>HTML rendering</td><td>wx.html2.WebView + <code>wx_accessible_webview</code></td><td>Edge WebView2 on Windows, WebKit on macOS; accessible ARIA live regions</td></tr>
-        <tr><td>AI backend</td><td>Ollama (local HTTP)</td><td>Any pulled model works; selection is per-file-type-recommended</td></tr>
-        <tr><td>HTTP client</td><td>httpx</td><td>Streaming-friendly async client for Ollama chat API</td></tr>
-        <tr><td>Image / OCR</td><td>Pillow + pytesseract</td><td>Dimension detection + Tesseract OCR; Tesseract binary must be on PATH</td></tr>
-        <tr><td>Markdown rendering</td><td>markdown package</td><td>Only used when the model returns Markdown and the user chose Table &gt; Markdown</td></tr>
-        <tr><td>Threading</td><td><code>threading.Thread</code> + <code>wx.CallAfter</code></td><td>All long-running work off the main thread; all UI updates posted back via <code>CallAfter</code></td></tr>
-        <tr><td>Config files</td><td>flat <code>requirements.txt</code></td><td>No pyproject.toml; pip-install everything in one shot</td></tr>
-        <tr><td>App icon</td><td><code>assets/app_icon.png</code> (1254&times;1254)</td><td>Set via <code>wx.Icon</code> on app and frame; works on Windows title bar + taskbar</td></tr>
+        <tr><th scope="row">Platform</th><td>Windows 10/11, macOS 14+</td><td>Linux works for dev but is untested</td></tr>
+        <tr><th scope="row">GUI toolkit</th><td>wxPython 4.2+</td><td>Cross-platform; native widgets on every OS</td></tr>
+        <tr><th scope="row">HTML rendering</th><td>wx.html2.WebView + <code>wx_accessible_webview</code></td><td>Edge WebView2 on Windows, WebKit on macOS; accessible ARIA live regions</td></tr>
+        <tr><th scope="row">AI backend</th><td>Ollama (local HTTP)</td><td>Any pulled model works; selection is per-file-type-recommended</td></tr>
+        <tr><th scope="row">HTTP client</th><td>httpx</td><td>Streaming-friendly async client for Ollama chat API</td></tr>
+        <tr><th scope="row">Image / OCR</th><td>Pillow + pytesseract</td><td>Dimension detection + Tesseract OCR; Tesseract binary must be on PATH</td></tr>
+        <tr><th scope="row">Markdown rendering</th><td>markdown package</td><td>Only used when the model returns Markdown and the user chose Table &gt; Markdown</td></tr>
+        <tr><th scope="row">Threading</th><td><code>threading.Thread</code> + <code>wx.CallAfter</code></td><td>All long-running work off the main thread; all UI updates posted back via <code>CallAfter</code></td></tr>
+        <tr><th scope="row">Config files</th><td>flat <code>requirements.txt</code></td><td>No pyproject.toml; pip-install everything in one shot</td></tr>
+        <tr><th scope="row">App icon</th><td><code>assets/app_icon.png</code> (1254&times;1254)</td><td>Set via <code>wx.Icon</code> on app and frame; works on Windows title bar + taskbar</td></tr>
       </tbody>
     </table>
   </div>
@@ -314,7 +316,7 @@ a:focus-visible,button:focus-visible{outline:3px solid #0059b3;outline-offset:2p
             wx.CallAfter(self._on_analysis_error, file, str(exc))
     threading.Thread(target=do_analysis, daemon=True).start()</code></pre>
   <p>The <code>on_chunk</code> callback inside <code>do_analysis</code> is called from the worker thread, so <code>UIAnalyzer.analyze</code> wraps it: every chunk path inside the analyzer calls <code>wx.CallAfter(self._detail.stream_chunk, text)</code> before touching the wx widget. This is the only safe way to update a wx control from a background thread.</p>
-  <div class="warning">Never call <code>self._status.SetStatusText(...)</code>, <code>self._list.SetItem(...)</code>, or any other wx method directly from inside <code>do_analysis</code> &mdash; it works on a lucky run, then crashes randomly. Always go through <code>wx.CallAfter</code>.</div>
+  <div class="warning"><strong>Warning: </strong>Never call <code>self._status.SetStatusText(...)</code>, <code>self._list.SetItem(...)</code>, or any other wx method directly from inside <code>do_analysis</code> &mdash; it works on a lucky run, then crashes randomly. Always go through <code>wx.CallAfter</code>.</div>
 </section>
 
 <section class="card" id="image-analysis" aria-labelledby="h-img">
@@ -327,7 +329,7 @@ a:focus-visible,button:focus-visible{outline:3px solid #0059b3;outline-offset:2p
     <li><strong>Prompt</strong> &mdash; The header and OCR text are passed to <code>_image_prompt</code>, which asks the model to describe the screen visually using that structured text.</li>
   </ol>
   <p>Ollama does not receive image pixel data directly &mdash; only structured text. Text-heavy screens work very well. Icon-heavy screens with no labels are harder; the model works from position information alone.</p>
-  <div class="note">If Tesseract is not installed, <code>pytesseract</code> raises a clear error at runtime. The scanner still picks up image files; the user just gets an error when they try to analyze one. The error pane in <code>DetailPanel</code> shows the missing-binary message.</div>
+  <div class="note"><strong>Note: </strong>If Tesseract is not installed, <code>pytesseract</code> raises a clear error at runtime. The scanner still picks up image files; the user just gets an error when they try to analyze one. The error pane in <code>DetailPanel</code> shows the missing-binary message.</div>
 </section>
 
 <!-- ── Vision analysis pipeline ───────────────────────────────────────────── -->
@@ -367,7 +369,7 @@ if screenshot_data and vision_mode == VisionMode.MULTIMODAL and (
     session.add_user(prompt + ocr_suffix)
     vision_mode = VisionMode.OCR_TEXT
     # retry stream ...</code></pre>
-  <div class="note">The fallback is automatic and transparent to the user. A notification announces the result ("Analysis complete") regardless of which strategy was used. The <code>vision_mode</code> field on <code>UIAnalysis</code> records which path was taken for debugging.</div>
+  <div class="note"><strong>Note: </strong>The fallback is automatic and transparent to the user. A notification announces the result ("Analysis complete") regardless of which strategy was used. The <code>vision_mode</code> field on <code>UIAnalysis</code> records which path was taken for debugging.</div>
 </section>
 
 <!-- ── Screenshot attachment ──────────────────────────────────────────────── -->
@@ -492,18 +494,18 @@ Return ONLY the JSON object:
         <tr><th scope="col">Constant</th><th scope="col">Framework</th><th scope="col">Key APIs covered</th></tr>
       </thead>
       <tbody>
-        <tr><td><code>_SWIFTUI_APIS</code></td><td>SwiftUI</td><td><code>.accessibilityLabel</code>, <code>@AccessibilityFocusState</code>, <code>.frame(minWidth:44)</code>, <code>AccessibilityNotification</code></td></tr>
-        <tr><td><code>_REACT_APIS</code></td><td>React / JSX</td><td><code>aria-label</code>, <code>aria-live</code>, <code>useRef + focus()</code>, semantic HTML, touch targets</td></tr>
-        <tr><td><code>_REACT_NATIVE_APIS</code></td><td>React Native</td><td><code>accessibilityLabel</code>, <code>accessibilityRole</code>, <code>hitSlop</code>, <code>AccessibilityInfo.announceForAccessibility</code></td></tr>
-        <tr><td><code>_VUE_APIS</code></td><td>Vue / Svelte</td><td><code>:aria-label</code>, <code>aria-live</code>, <code>$refs.el.focus()</code>, <code>prefers-reduced-motion</code></td></tr>
-        <tr><td><code>_HTML_CSS_APIS</code></td><td>HTML / CSS</td><td>Semantic elements, <code>&lt;dialog&gt;</code>, ARIA, dark mode, touch targets</td></tr>
-        <tr><td><code>_WXPYTHON_APIS</code></td><td>wxPython</td><td><code>SetName</code>, <code>SetToolTip</code>, <code>wx.AcceleratorTable</code>, <code>wx.EVT_CHAR</code></td></tr>
-        <tr><td><code>_PYQT_APIS</code></td><td>PyQt6 / PySide6</td><td><code>setAccessibleName</code>, <code>setFocusPolicy</code>, <code>QShortcut</code></td></tr>
-        <tr><td><code>_TKINTER_APIS</code></td><td>tkinter</td><td><code>takefocus=True</code>, <code>bind("&lt;Return&gt;")</code>, ttk preference, <code>focus_set()</code></td></tr>
-        <tr><td><code>_WINFORMS_APIS</code></td><td>WinForms</td><td><code>AccessibleName</code>, <code>TabIndex</code>, <code>MinimumSize</code>, <code>ToolTip</code></td></tr>
-        <tr><td><code>_WPF_APIS</code></td><td>WPF</td><td><code>AutomationProperties.Name</code>, <code>FocusManager</code>, <code>AutomationPeer</code></td></tr>
-        <tr><td><code>_MAUI_APIS</code></td><td>.NET MAUI</td><td><code>SemanticProperties.Description</code>, <code>SemanticProperties.HeadingLevel</code>, <code>MinimumSizeRequest</code></td></tr>
-        <tr><td><code>_AVALONIA_APIS</code></td><td>Avalonia</td><td><code>AutomationProperties.Name</code>, <code>KeyboardNavigation.TabIndex</code>, <code>AutomationPeer</code></td></tr>
+        <tr><th scope="row"><code>_SWIFTUI_APIS</code></th><td>SwiftUI</td><td><code>.accessibilityLabel</code>, <code>@AccessibilityFocusState</code>, <code>.frame(minWidth:44)</code>, <code>AccessibilityNotification</code></td></tr>
+        <tr><th scope="row"><code>_REACT_APIS</code></th><td>React / JSX</td><td><code>aria-label</code>, <code>aria-live</code>, <code>useRef + focus()</code>, semantic HTML, touch targets</td></tr>
+        <tr><th scope="row"><code>_REACT_NATIVE_APIS</code></th><td>React Native</td><td><code>accessibilityLabel</code>, <code>accessibilityRole</code>, <code>hitSlop</code>, <code>AccessibilityInfo.announceForAccessibility</code></td></tr>
+        <tr><th scope="row"><code>_VUE_APIS</code></th><td>Vue / Svelte</td><td><code>:aria-label</code>, <code>aria-live</code>, <code>$refs.el.focus()</code>, <code>prefers-reduced-motion</code></td></tr>
+        <tr><th scope="row"><code>_HTML_CSS_APIS</code></th><td>HTML / CSS</td><td>Semantic elements, <code>&lt;dialog&gt;</code>, ARIA, dark mode, touch targets</td></tr>
+        <tr><th scope="row"><code>_WXPYTHON_APIS</code></th><td>wxPython</td><td><code>SetName</code>, <code>SetToolTip</code>, <code>wx.AcceleratorTable</code>, <code>wx.EVT_CHAR</code></td></tr>
+        <tr><th scope="row"><code>_PYQT_APIS</code></th><td>PyQt6 / PySide6</td><td><code>setAccessibleName</code>, <code>setFocusPolicy</code>, <code>QShortcut</code></td></tr>
+        <tr><th scope="row"><code>_TKINTER_APIS</code></th><td>tkinter</td><td><code>takefocus=True</code>, <code>bind("&lt;Return&gt;")</code>, ttk preference, <code>focus_set()</code></td></tr>
+        <tr><th scope="row"><code>_WINFORMS_APIS</code></th><td>WinForms</td><td><code>AccessibleName</code>, <code>TabIndex</code>, <code>MinimumSize</code>, <code>ToolTip</code></td></tr>
+        <tr><th scope="row"><code>_WPF_APIS</code></th><td>WPF</td><td><code>AutomationProperties.Name</code>, <code>FocusManager</code>, <code>AutomationPeer</code></td></tr>
+        <tr><th scope="row"><code>_MAUI_APIS</code></th><td>.NET MAUI</td><td><code>SemanticProperties.Description</code>, <code>SemanticProperties.HeadingLevel</code>, <code>MinimumSizeRequest</code></td></tr>
+        <tr><th scope="row"><code>_AVALONIA_APIS</code></th><td>Avalonia</td><td><code>AutomationProperties.Name</code>, <code>KeyboardNavigation.TabIndex</code>, <code>AutomationPeer</code></td></tr>
       </tbody>
     </table>
   </div>
@@ -704,12 +706,12 @@ def _roll_context(self, file_id: str) -> None:
         </tr>
       </thead>
       <tbody>
-        <tr><td><code>ui_analyzer/services/localhost_crawler.py</code></td><td><code>CrawlConfig</code> dataclass, <code>LocalhostCrawler</code> class, <code>save_crawl_to_temp()</code> function</td></tr>
-        <tr><td><code>ui_analyzer/views/crawl_dialog.py</code></td><td><code>CrawlDialog</code> modal &mdash; URL entry, settings controls, Start / Cancel buttons</td></tr>
-        <tr><td><code>ui_analyzer/views/main_frame.py</code></td><td><code>_open_crawl_dialog()</code>, <code>_start_crawl()</code>, <code>_on_crawl_complete()</code> handlers</td></tr>
-        <tr><td><code>ui_analyzer/views/settings_dialog.py</code></td><td>New "Crawler" settings tab for default max-pages, max-depth, and pause values</td></tr>
-        <tr><td><code>ui_analyzer/services/config_manager.py</code></td><td><code>get_crawl_config()</code> and <code>set_crawl_config()</code> helpers</td></tr>
-        <tr><td><code>ui_analyzer/services/ollama_client.py</code></td><td><code>_ipv4_fallback(base_url)</code> helper and retry logic in <code>is_available()</code></td></tr>
+        <tr><th scope="row"><code>ui_analyzer/services/localhost_crawler.py</code></th><td><code>CrawlConfig</code> dataclass, <code>LocalhostCrawler</code> class, <code>save_crawl_to_temp()</code> function</td></tr>
+        <tr><th scope="row"><code>ui_analyzer/views/crawl_dialog.py</code></th><td><code>CrawlDialog</code> modal &mdash; URL entry, settings controls, Start / Cancel buttons</td></tr>
+        <tr><th scope="row"><code>ui_analyzer/views/main_frame.py</code></th><td><code>_open_crawl_dialog()</code>, <code>_start_crawl()</code>, <code>_on_crawl_complete()</code> handlers</td></tr>
+        <tr><th scope="row"><code>ui_analyzer/views/settings_dialog.py</code></th><td>New "Crawler" settings tab for default max-pages, max-depth, and pause values</td></tr>
+        <tr><th scope="row"><code>ui_analyzer/services/config_manager.py</code></th><td><code>get_crawl_config()</code> and <code>set_crawl_config()</code> helpers</td></tr>
+        <tr><th scope="row"><code>ui_analyzer/services/ollama_client.py</code></th><td><code>_ipv4_fallback(base_url)</code> helper and retry logic in <code>is_available()</code></td></tr>
       </tbody>
     </table>
   </div>
@@ -832,15 +834,15 @@ python -m http.server 3000
         </tr>
       </thead>
       <tbody>
-        <tr><td>Open Folder</td><td><kbd>Ctrl O</kbd></td><td><kbd>Cmd O</kbd></td><td>File</td></tr>
-        <tr><td>Choose AI Model</td><td><kbd>Ctrl M</kbd></td><td><kbd>Cmd M</kbd></td><td>File</td></tr>
-        <tr><td>Quit</td><td><kbd>Ctrl Q</kbd></td><td><kbd>Cmd Q</kbd></td><td>File</td></tr>
-        <tr><td>Analyze / Re-analyze</td><td><kbd>Ctrl R</kbd></td><td><kbd>Cmd R</kbd></td><td>Analysis</td></tr>
-        <tr><td>Build Project Context</td><td><kbd>Ctrl Shift A</kbd></td><td><kbd>Cmd Shift A</kbd></td><td>Analysis</td></tr>
-        <tr><td>Ask Project Question</td><td><kbd>Ctrl Shift I</kbd></td><td><kbd>Cmd Shift I</kbd></td><td>Analysis</td></tr>
-        <tr><td>Crawl Localhost Site</td><td><kbd>Ctrl Shift W</kbd></td><td><kbd>Cmd Shift W</kbd></td><td>File</td></tr>
-        <tr><td>Copy Output</td><td><kbd>Ctrl Shift C</kbd></td><td><kbd>Cmd Shift C</kbd></td><td>Edit</td></tr>
-        <tr><td>Save Output</td><td><kbd>Ctrl S</kbd></td><td><kbd>Cmd S</kbd></td><td>Edit</td></tr>
+        <tr><th scope="row">Open Folder</th><td><kbd>Ctrl O</kbd></td><td><kbd>Cmd O</kbd></td><td>File</td></tr>
+        <tr><th scope="row">Choose AI Model</th><td><kbd>Ctrl M</kbd></td><td><kbd>Cmd M</kbd></td><td>File</td></tr>
+        <tr><th scope="row">Quit</th><td><kbd>Ctrl Q</kbd></td><td><kbd>Cmd Q</kbd></td><td>File</td></tr>
+        <tr><th scope="row">Analyze / Re-analyze</th><td><kbd>Ctrl R</kbd></td><td><kbd>Cmd R</kbd></td><td>Analysis</td></tr>
+        <tr><th scope="row">Build Project Context</th><td><kbd>Ctrl Shift A</kbd></td><td><kbd>Cmd Shift A</kbd></td><td>Analysis</td></tr>
+        <tr><th scope="row">Ask Project Question</th><td><kbd>Ctrl Shift I</kbd></td><td><kbd>Cmd Shift I</kbd></td><td>Analysis</td></tr>
+        <tr><th scope="row">Crawl Localhost Site</th><td><kbd>Ctrl Shift W</kbd></td><td><kbd>Cmd Shift W</kbd></td><td>File</td></tr>
+        <tr><th scope="row">Copy Output</th><td><kbd>Ctrl Shift C</kbd></td><td><kbd>Cmd Shift C</kbd></td><td>Edit</td></tr>
+        <tr><th scope="row">Save Output</th><td><kbd>Ctrl S</kbd></td><td><kbd>Cmd S</kbd></td><td>Edit</td></tr>
       </tbody>
     </table>
   </div>
@@ -860,6 +862,22 @@ python -m http.server 3000
     <li><strong>Refresh model list after pulling:</strong> the model picker caches its list at construction time. After <code>ollama pull</code>, the user must click the <strong>Refresh model list</strong> button to see the new model.</li>
     <li><strong>AccessibleWebView import is optional:</strong> if <code>wx_accessible_webview</code> is not installed, <code>DetailPanel</code> falls back to <code>wx.html2.WebView</code> silently. The fallback works but exposes less of the rendered HTML to screen readers. To get the full a11y experience on Windows, install <code>pip install wx-accessible-webview</code>.</li>
   </ul>
+</section>
+
+<section class="card" id="cli-tool" aria-labelledby="h-cli-tool">
+  <h2 id="h-cli-tool">Command Line Interface (CLI)</h2>
+  <p>The project includes a standalone CLI tool (<code class="code">ui_analyzer.py</code>) that provides the same analysis capabilities as the GUI. This is the primary interface for AI agents and automation scripts.</p>
+  <h3 class="h4">Technical Implementation</h3>
+  <p>The CLI is implemented as a single-file script that wraps the core analysis logic. It uses <code class="code">argparse</code> for command-line argument parsing and outputs results to <code class="code">stdout</code>, while sending progress updates to <code class="code">stderr</code> to allow for clean piping.</p>
+  <h3 class="h4">Execution Flow</h3>
+  <ol>
+    <li><strong>Argument Parsing</strong>: Parses target path and options (backend, model, output mode).</li>
+    <li><strong>File Detection</strong>: Uses <code class="code">detect_file_type()</code> to determine the UI framework.</li>
+    <li><strong>Content Loading</strong>: Loads source code or performs OCR on images.</li>
+    <li><strong>Prompt Construction</strong>: Injects framework-specific API references and automated contrast reports.</li>
+    <li><strong>AI Streaming</strong>: Streams response from the selected backend (Ollama, OpenAI, or Claude).</li>
+  </ol>
+  <div class="note"><strong>Note: </strong>The CLI does not currently share the GUI's <code>AttachmentStore</code> for persistency, meaning it analyzes files as-is without automatically looking for <code>.context.png</code> attachments unless the path provided is the image itself.</div>
 </section>
 
 <section class="card" id="build" aria-labelledby="h-build">
@@ -904,14 +922,16 @@ pyinstaller --onefile --windowed \
 </main>
 </div>
 
-<button id="back-to-top" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8679; Top</button>
+<button id="back-to-top" tabindex="-1" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8679; Top</button>
 
 <script>
 (function(){
   /* ── Back-to-top visibility ────────────────────────────────────────────── */
   var btn = document.getElementById('back-to-top');
   window.addEventListener('scroll', function(){
-    btn.classList.toggle('visible', window.scrollY > 300);
+    var isVisible = window.scrollY > 300;
+    btn.classList.toggle('visible', isVisible);
+    btn.setAttribute('tabindex', isVisible ? '0' : '-1');
   }, {passive:true});
 
   /* ── ScrollSpy: mark active nav link with aria-current="location" ──────── */
