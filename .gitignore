@@ -51,3 +51,10 @@ wxPython*
 # OCR / model artifacts
 tesseract_output/
 *.traineddata
+
+# Application Data
+.ui_analyzer/
+attachments.json
+config.json
+developer-guide.html.context.png
+ui_file.py.context.png

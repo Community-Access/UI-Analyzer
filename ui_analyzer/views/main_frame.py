@@ -10,11 +10,26 @@ import wx
 
 from ui_analyzer.models.ui_file import UIFile, OutputMode, TableFormat
 from ui_analyzer.services.file_scanner import scan_folder
+from ui_analyzer.services.ai_client import AIClient
+from ui_analyzer.services.config_manager import ConfigManager
 from ui_analyzer.services.ollama_client import OllamaClient
+from ui_analyzer.services.anthropic_client import AnthropicClient
+from ui_analyzer.services.openai_client import OpenAIClient
 from ui_analyzer.services.ui_analyzer import UIAnalyzer
 from ui_analyzer.views.sidebar import SidebarPanel
-from ui_analyzer.views.detail_panel import DetailPanel, _HAS_ACCESSIBLE_WV
+from ui_analyzer.views.detail_panel import DetailPanel
+
+try:
+    from wx_accessible_webview import AccessibleWebView as _AccessibleWebView  # type: ignore[import]
+    _HAS_ACCESSIBLE_WV = True
+except ImportError:
+    _HAS_ACCESSIBLE_WV = False
 from ui_analyzer.views.model_picker import ModelPickerDialog
+from ui_analyzer.views.settings_dialog import SettingsDialog
+from ui_analyzer.views.crawl_dialog import CrawlDialog
+from ui_analyzer.services.localhost_crawler import (
+    CrawlConfig, LocalhostCrawler, save_crawl_to_temp,
+)
 
 _APP_NAME    = "UI Analyzer"
 _DEFAULT_W   = 1100
@@ -29,6 +44,10 @@ _ID_ASK_PROJECT   = wx.NewIdRef()
 _ID_COPY          = wx.NewIdRef()
 _ID_SAVE          = wx.NewIdRef()
 _ID_MODEL_PICKER  = wx.NewIdRef()
+_ID_SETTINGS      = wx.NewIdRef()
+_ID_VALIDATE      = wx.NewIdRef()
+_ID_CRAWL         = wx.NewIdRef()
+_ID_CANCEL_CRAWL  = wx.NewIdRef()
 
 
 class MainFrame(wx.Frame):
@@ -48,11 +67,15 @@ class MainFrame(wx.Frame):
             title=_APP_NAME,
             size=(_DEFAULT_W, _DEFAULT_H),
         )
-        self._client   = OllamaClient()
+        self._config          = ConfigManager()
+        self._client          = self._init_ai_client()
         self._model: Optional[str] = None
         self._analyzer: Optional[UIAnalyzer] = None
         self._current_file: Optional[UIFile] = None
         self._files: list[UIFile] = []
+        self._context_cancel  = False
+        self._crawler: Optional[LocalhostCrawler] = None
+        self._crawl_config = CrawlConfig.from_dict(self._config.get_crawl_config())
 
         self._build_ui()
         self._build_menu()
@@ -81,6 +104,11 @@ class MainFrame(wx.Frame):
             on_select=self._on_file_selected,
             on_open_folder=self._open_folder_dialog,
             on_drop_folder=self._load_folder,
+            on_attachment_changed=self._on_attachment_changed,
+            on_activate=self._trigger_analyze,
+            on_build_context=self._build_project_context,
+            on_cancel_context=self._cancel_project_context,
+            on_clear_context=self._clear_project_context,
         )
 
         self._detail = DetailPanel(
@@ -90,6 +118,9 @@ class MainFrame(wx.Frame):
             on_save=self._save_output,
             on_follow_up=self._send_follow_up,
             status_bar=self._status,
+            on_validate=self._start_validate,
+            on_detach=self._on_detail_detach,
+            on_open_folder=self._open_folder_dialog,
         )
 
         self._splitter.SplitVertically(self._sidebar, self._detail, _SIDEBAR_W)
@@ -101,9 +132,13 @@ class MainFrame(wx.Frame):
         file_menu = wx.Menu()
         file_menu.Append(_ID_OPEN_FOLDER, "Open Folder…\tCtrl+O",
                           "Open a folder of UI source files")
+        file_menu.Append(_ID_CRAWL, "Crawl Localhost Site…\tCtrl+Shift+W",
+                          "Visit a running local web app page by page and add each page to the sidebar")
         file_menu.AppendSeparator()
         file_menu.Append(_ID_MODEL_PICKER, "Choose AI Model…\tCtrl+M",
                           "Select which Ollama model to use")
+        file_menu.Append(_ID_SETTINGS, "Settings…\tCtrl+,",
+                          "Configure AI providers and connectivity")
         file_menu.AppendSeparator()
         file_menu.Append(wx.ID_EXIT, "Quit\tCtrl+Q")
         mb.Append(file_menu, "&File")
@@ -112,6 +147,9 @@ class MainFrame(wx.Frame):
         an_menu = wx.Menu()
         an_menu.Append(_ID_ANALYZE, "Analyze / Re-analyze\tCtrl+R",
                         "Run AI analysis on the selected file")
+        an_menu.AppendSeparator()
+        an_menu.Append(_ID_VALIDATE, "Validate / Re-validate\tCtrl+Shift+V",
+                        "Compare the analysis against the attached screenshot")
         an_menu.AppendSeparator()
         an_menu.Append(_ID_BUILD_CONTEXT, "Build Project Context\tCtrl+Shift+A",
                         "Summarise all files for cross-file questions")
@@ -131,35 +169,110 @@ class MainFrame(wx.Frame):
 
         # Bind menu events
         self.Bind(wx.EVT_MENU, lambda _e: self._open_folder_dialog(),  id=_ID_OPEN_FOLDER)
+        self.Bind(wx.EVT_MENU, lambda _e: self._open_crawl_dialog(),  id=_ID_CRAWL)
         self.Bind(wx.EVT_MENU, lambda _e: self._trigger_analyze(),     id=_ID_ANALYZE)
+        self.Bind(wx.EVT_MENU, lambda _e: self._trigger_validate(),   id=_ID_VALIDATE)
         self.Bind(wx.EVT_MENU, lambda _e: self._build_project_context(), id=_ID_BUILD_CONTEXT)
         self.Bind(wx.EVT_MENU, lambda _e: self._open_ask_project_dialog(), id=_ID_ASK_PROJECT)
         self.Bind(wx.EVT_MENU, lambda _e: self._copy_output(),         id=_ID_COPY)
         self.Bind(wx.EVT_MENU, lambda _e: self._save_output(),         id=_ID_SAVE)
         self.Bind(wx.EVT_MENU, lambda _e: self._open_model_picker(),   id=_ID_MODEL_PICKER)
+        self.Bind(wx.EVT_MENU, lambda _e: self._open_settings_dialog(),   id=_ID_SETTINGS)
         self.Bind(wx.EVT_MENU, lambda _e: self.Close(),                id=wx.ID_EXIT)
 
     def _build_accelerators(self) -> None:
-        # Duplicate menu shortcuts as accelerators so they work
-        # even when focus is in a wx.TextCtrl or WebView
+        # AcceleratorTable for controls that are NOT EdgeWebView2 (WebView swallows
+        # Ctrl+O, Ctrl+R, etc. before the table fires).  EVT_CHAR_HOOK below covers
+        # those same shortcuts when the WebView has keyboard focus.
         accel_entries = [
             wx.AcceleratorEntry(wx.ACCEL_CTRL, ord("O"), _ID_OPEN_FOLDER),
+            wx.AcceleratorEntry(wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("W"), _ID_CRAWL),
             wx.AcceleratorEntry(wx.ACCEL_CTRL, ord("R"), _ID_ANALYZE),
+            wx.AcceleratorEntry(wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("V"), _ID_VALIDATE),
             wx.AcceleratorEntry(wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("A"), _ID_BUILD_CONTEXT),
             wx.AcceleratorEntry(wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("I"), _ID_ASK_PROJECT),
             wx.AcceleratorEntry(wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord("C"), _ID_COPY),
             wx.AcceleratorEntry(wx.ACCEL_CTRL, ord("S"), _ID_SAVE),
             wx.AcceleratorEntry(wx.ACCEL_CTRL, ord("M"), _ID_MODEL_PICKER),
+            wx.AcceleratorEntry(wx.ACCEL_CTRL, ord(","), _ID_SETTINGS),
         ]
         self.SetAcceleratorTable(wx.AcceleratorTable(accel_entries))
+
+        # EVT_CHAR_HOOK fires at the top-level window BEFORE any child window
+        # (including EdgeWebView2) can consume the key.  Use it to guarantee that
+        # our shortcuts work regardless of which control has focus.
+        self.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
+
+    def _on_char_hook(self, event: wx.KeyEvent) -> None:
+        # CmdDown() → Cmd on macOS, Ctrl on Windows/Linux; cross-platform safe.
+        cmd   = event.CmdDown()
+        shift = event.ShiftDown()
+        key   = event.GetKeyCode()
+
+        if cmd and not shift and key == ord("O"):
+            self._open_folder_dialog()
+            return
+        if cmd and not shift and key == ord("R"):
+            self._trigger_analyze()
+            return
+        if cmd and shift and key == ord("V"):
+            self._trigger_validate()
+            return
+        if cmd and shift and key == ord("A"):
+            self._build_project_context()
+            return
+        if cmd and shift and key == ord("S"):
+            self._save_output()
+            return
+        if cmd and shift and key == ord("W"):
+            self._open_crawl_dialog()
+            return
+        # Escape cancels an active crawl
+        if key == wx.WXK_ESCAPE and self._crawler is not None:
+            self._crawler.cancel()
+            self._status.SetStatusText("Cancelling crawl…")
+            return
+        event.Skip()
+
+    def _init_ai_client(self) -> AIClient:
+        """Instantiate the correct AI client based on current configuration."""
+        provider = self._config.get("provider", "ollama")
+
+        if provider == "ollama":
+            url = self._config.get("ollama_url", "http://localhost:11434")
+            return OllamaClient(base_url=url)
+        elif provider == "anthropic":
+            key = self._config.get_api_key("anthropic")
+            if not key:
+                return OllamaClient(base_url="http://localhost:11434") # Fallback
+            return AnthropicClient(api_key=key)
+        elif provider == "openai":
+            key = self._config.get_api_key("openai")
+            if not key:
+                return OllamaClient(base_url="http://localhost:11434") # Fallback
+            return OpenAIClient(api_key=key)
+
+        return OllamaClient(base_url="http://localhost:11434")
+
+    def _open_settings_dialog(self) -> None:
+        dlg = SettingsDialog(self, self._config)
+        if dlg.ShowModal() == wx.ID_OK:
+            # Settings changed, re-init client and analyzer
+            self._client = self._init_ai_client()
+            self._model = None
+            self._auto_select_model()
+        dlg.Destroy()
+
 
     # ── Model selection ───────────────────────────────────────────────────────
 
     def _auto_select_model(self) -> None:
-        """Pick the first available model, or prompt if none installed."""
+        """Use the saved model if available, otherwise pick the first available."""
         models = self._client.list_models()
         if models:
-            self._model = models[0]["name"]
+            model_names = [m["name"] for m in models]
+            saved = self._config.get("model", "")
+            self._model = saved if saved in model_names else model_names[0]
             self._analyzer = UIAnalyzer(self._client, self._model)
             self._status.SetStatusText(f"Model: {self._model}", 1)
         elif not self._client.is_available():
@@ -221,6 +334,100 @@ class MainFrame(wx.Frame):
 
         threading.Thread(target=do_scan, daemon=True).start()
 
+    # ── Localhost crawler ─────────────────────────────────────────────────────
+
+    def _open_crawl_dialog(self) -> None:
+        dlg = CrawlDialog(self, self._crawl_config)
+        if dlg.ShowModal() != wx.ID_OK:
+            dlg.Destroy()
+            return
+        url = dlg.url
+        self._crawl_config = dlg.config
+        self._config.set_crawl_config(self._crawl_config.to_dict())
+        dlg.Destroy()
+        self._start_crawl(url)
+
+    def _start_crawl(self, start_url: str) -> None:
+        if self._crawler is not None:
+            wx.MessageBox(
+                "A crawl is already in progress. Wait for it to finish or restart the app.",
+                "Crawl in Progress",
+                wx.OK | wx.ICON_INFORMATION,
+                self,
+            )
+            return
+
+        self._crawler = LocalhostCrawler(self._crawl_config)
+        self._status.SetStatusText(f"Crawling {start_url}…")
+
+        notify = wx.adv.NotificationMessage(
+            "UI Analyzer", f"Crawling {start_url} — Escape to cancel"
+        )
+        try:
+            notify.Show(timeout=0)
+        except Exception:
+            pass
+
+        def on_progress(visited: int, total: int, url: str) -> None:
+            wx.CallAfter(
+                self._status.SetStatusText,
+                f"Crawling: {visited}/{total} pages — {url}",
+            )
+
+        self._crawler.on_progress = on_progress
+
+        def do_crawl() -> None:
+            assert self._crawler is not None
+            pages = self._crawler.crawl(start_url)
+            cancelled = self._crawler.is_cancelled
+            wx.CallAfter(self._on_crawl_complete, pages, start_url, cancelled)
+
+        threading.Thread(target=do_crawl, daemon=True).start()
+
+    def _on_crawl_complete(
+        self,
+        pages: list,
+        start_url: str,
+        cancelled: bool,
+    ) -> None:
+        self._crawler = None
+        count = len(pages)
+
+        if count == 0:
+            msg = (
+                f"No pages were crawled from {start_url}.\n\n"
+                "Make sure the server is running and the URL is correct."
+            )
+            wx.MessageBox(msg, "Crawl Result", wx.OK | wx.ICON_WARNING, self)
+            self._status.SetStatusText("Crawl complete — no pages found")
+            return
+
+        # Save pages to temp dir and scan it
+        crawl_dir = save_crawl_to_temp(pages)
+        new_files = scan_folder(crawl_dir)
+
+        # Append crawled files to whatever is already in the sidebar
+        self._files = self._files + new_files
+        self._sidebar.set_files(self._files)
+
+        msg_prefix = "Crawl cancelled." if cancelled else "Crawl complete."
+        self._status.SetStatusText(
+            f"{msg_prefix} {count} page{'s' if count != 1 else ''} added to sidebar"
+        )
+
+        notify = wx.adv.NotificationMessage(
+            "UI Analyzer",
+            f"{msg_prefix} {count} page{'s' if count != 1 else ''} added to the sidebar.",
+        )
+        try:
+            notify.Show(timeout=0)
+        except Exception:
+            pass
+
+        # Select the first crawled file automatically
+        if new_files:
+            self._sidebar.select_file(new_files[0])
+
     def _on_scan_complete(self, files: list[UIFile]) -> None:
         self._files = files
         self._sidebar.set_files(files)
@@ -234,7 +441,7 @@ class MainFrame(wx.Frame):
     def _on_file_selected(self, file: UIFile) -> None:
         self._current_file = file
         self._detail.show_file(file)
-        if self._analyzer and self._model:
+        if self._analyzer and self._model and self._config.get("provider") == "ollama":
             from ui_analyzer.services.ollama_client import best_model_for_filetype
             recommended = best_model_for_filetype(
                 [m["name"] for m in self._client.list_models()],
@@ -249,7 +456,11 @@ class MainFrame(wx.Frame):
 
     # ── Analysis ──────────────────────────────────────────────────────────────
 
-    def _trigger_analyze(self) -> None:
+    def _trigger_analyze(self, file: Optional[UIFile] = None) -> None:
+        if file is None:
+            file = self._current_file
+        if self._current_file is None and file is not None:
+            self._current_file = file
         if self._current_file:
             file = self._current_file
             # Read current mode/format from detail panel's choices
@@ -295,7 +506,7 @@ class MainFrame(wx.Frame):
         self._analyze_btn_reset()
         # Move focus to the output view so screen readers immediately read the result
         # (NVDA/JAWS announce the view's accessible name + content on focus)
-        self._detail._result_view.SetFocus()
+        self._detail.set_focus()
 
     def _on_analysis_error(self, file: UIFile) -> None:
         self._sidebar.update_file(file)
@@ -306,6 +517,72 @@ class MainFrame(wx.Frame):
         btn = self._detail._analyze_btn
         btn.SetLabel("Re-analyze")
         btn.Enable()
+
+    # ── Validate ──────────────────────────────────────────────────────────────
+
+    def _trigger_validate(self) -> None:
+        if self._current_file:
+            self._start_validate(self._current_file)
+
+    def _start_validate(self, file: UIFile) -> None:
+        if not self._analyzer:
+            wx.MessageBox("No AI model selected. Use File → Choose AI Model.",
+                          "No Model", wx.OK | wx.ICON_WARNING, self)
+            return
+        if not file.analysis:
+            wx.MessageBox("Analyze this file first before validating.",
+                          "No Analysis", wx.OK | wx.ICON_WARNING, self)
+            return
+        if not file.attached_image_path:
+            wx.MessageBox(
+                "No screenshot attached.\n\n"
+                "Right-click the file in the sidebar and choose Attach Screenshot…",
+                "No Screenshot", wx.OK | wx.ICON_WARNING, self,
+            )
+            return
+
+        file.is_validating  = True
+        file.validate_error = None
+        self._detail.show_validation_progress()
+
+        analyzer = self._analyzer
+        prior    = file.analysis
+
+        def do_validate() -> None:
+            try:
+                result = analyzer.validate_against_screenshot(file, prior)
+                prior.validation = result
+                file.is_validating = False
+                wx.CallAfter(self._on_validation_done, file)
+            except Exception as exc:
+                file.is_validating  = False
+                file.validate_error = str(exc)
+                wx.CallAfter(self._on_validation_error, file)
+
+        threading.Thread(target=do_validate, daemon=True).start()
+
+    def _on_validation_done(self, file: UIFile) -> None:
+        if file.analysis and file.analysis.validation:
+            self._detail.show_validation_result(file.analysis.validation)
+        self._status.SetStatusText(f"Validation complete — {file.name}")
+
+    def _on_validation_error(self, file: UIFile) -> None:
+        self._detail.show_validation_error(file.validate_error or "Unknown error")
+        self._status.SetStatusText(f"Validation failed — {file.name}")
+
+    # ── Attachment callbacks ───────────────────────────────────────────────────
+
+    def _on_attachment_changed(self, file: UIFile) -> None:
+        """Called by SidebarPanel after attach or detach."""
+        self._detail.show_attachment_strip(file)
+        # If this is the currently-displayed file, refresh the full panel
+        if self._current_file and self._current_file.id == file.id:
+            self._current_file = file
+            self._detail.show_file(file)
+
+    def _on_detail_detach(self, file: UIFile) -> None:
+        """Called by the Detach button in the attachment strip."""
+        self._sidebar._detach_screenshot(file)
 
     # ── Follow-up ─────────────────────────────────────────────────────────────
 
@@ -346,21 +623,45 @@ class MainFrame(wx.Frame):
         files    = list(self._files)
         total    = len(files)
         self._status.SetStatusText(f"Building project context for {total} files…")
+        self._sidebar.set_context_state("building", (0, total))
+        self._context_cancel = False
 
         def do_build() -> None:
             try:
-                def on_progress(done: int, total: int) -> None:
-                    wx.CallAfter(
-                        self._status.SetStatusText,
-                        f"Building context: {done}/{total}…"
-                    )
+                def on_progress(done: int, tot: int) -> None:
+                    wx.CallAfter(self._sidebar.set_context_state, "building", (done, tot))
+                    wx.CallAfter(self._status.SetStatusText, f"Building context: {done}/{tot}…")
+
                 analyzer.build_project_context(files, on_progress)
-                wx.CallAfter(self._status.SetStatusText,
-                             "Project context ready — use Ctrl+Shift+I to ask a question")
+                wx.CallAfter(self._on_context_built)
             except Exception as exc:
-                wx.CallAfter(self._status.SetStatusText, f"Context error: {exc}")
+                wx.CallAfter(self._on_context_error, str(exc))
 
         threading.Thread(target=do_build, daemon=True).start()
+
+    def _on_context_built(self) -> None:
+        self._sidebar.set_context_state("clear")
+        self._status.SetStatusText("Project context ready — use Ctrl+Shift+I to ask questions")
+        from ui_analyzer.views.detail_panel import _announce
+        _announce("Project context ready. Use Ctrl Shift I to ask questions about all files.")
+
+    def _on_context_error(self, msg: str) -> None:
+        self._sidebar.set_context_state("build")
+        self._status.SetStatusText(f"Context build failed: {msg}")
+        wx.MessageBox(f"Failed to build project context:\n\n{msg}",
+                      "Context Error", wx.OK | wx.ICON_ERROR, self)
+
+    def _cancel_project_context(self) -> None:
+        if self._analyzer:
+            self._analyzer.clear_project_context()
+        self._sidebar.set_context_state("build")
+        self._status.SetStatusText("Context build cancelled")
+
+    def _clear_project_context(self) -> None:
+        if self._analyzer:
+            self._analyzer.clear_project_context()
+        self._sidebar.set_context_state("build")
+        self._status.SetStatusText("Project context cleared")
 
     def _open_ask_project_dialog(self) -> None:
         if not self._analyzer or not self._analyzer.project_context:
@@ -432,18 +733,22 @@ class ProjectQuestionDialog(wx.Dialog):
 
         if _HAS_ACCESSIBLE_WV:
             try:
-                from wx_accessible_webview import AccessibleWebView  # type: ignore[import]
-                self._answer_view = AccessibleWebView(panel)
+                self._answer_view = _AccessibleWebView(panel)
+                self._answer_window = self._answer_view.control
             except Exception:
                 self._answer_view = wx.TextCtrl(
                     panel, style=wx.TE_MULTILINE | wx.TE_READONLY
                 )
+                self._answer_window = self._answer_view
         else:
             self._answer_view = wx.TextCtrl(
                 panel, style=wx.TE_MULTILINE | wx.TE_READONLY
             )
-        self._answer_view.SetName("Project question answers")
-        sizer.Add(self._answer_view, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 12)
+            self._answer_window = self._answer_view
+
+        if hasattr(self._answer_window, "SetName"):
+            self._answer_window.SetName("Project question answers")
+        sizer.Add(self._answer_window, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 12)
 
         # Question bar
         q_row = wx.BoxSizer(wx.HORIZONTAL)

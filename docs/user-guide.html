@@ -5,55 +5,112 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>UI Analyzer &mdash; User Guide</title>
 <style>
-.skip-link{position:absolute;top:-100%;left:1rem;padding:.5rem 1rem;background:#0071e3;color:#fff;border-radius:0 0 6px 6px;font-size:.9rem;font-weight:600;text-decoration:none;z-index:9999}
-.skip-link:focus{top:0}
+/* ── Reset ───────────────────────────────────────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* ── Skip link ───────────────────────────────────────────────────────────── */
+.skip-link{position:absolute;top:-100%;left:1rem;padding:.5rem 1rem;background:#0059b3;color:#fff;border-radius:0 0 6px 6px;font-size:.9rem;font-weight:600;text-decoration:none;z-index:9999}
+.skip-link:focus{top:0}
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:1rem;line-height:1.7;color:#1d1d1f;background:#f5f5f7}
 .wrapper{max-width:860px;margin:0 auto;padding:2rem 1.5rem 4rem}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
 header{background:#1d1d1f;color:#f5f5f7;padding:2rem 1.5rem}
 header .inner{max-width:860px;margin:0 auto}
 header h1{font-size:2rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.25rem}
-header p.subtitle{color:#afafaf;font-size:1rem}
-nav{background:#fff;border-bottom:1px solid #d2d2d7}
-nav .inner{max-width:860px;margin:0 auto;padding:0 1.5rem;display:flex;flex-wrap:wrap;gap:.25rem}
-nav a{display:inline-block;padding:.65rem .75rem;color:#0071e3;text-decoration:none;font-size:.875rem;border-bottom:2px solid transparent}
-nav a:hover{border-bottom-color:#0071e3}
-nav a:focus{outline:3px solid #0071e3;outline-offset:-1px;border-radius:4px}
-.card{background:#fff;border-radius:12px;padding:1.75rem 2rem;margin-bottom:1.5rem;border:1px solid #d2d2d7}
+/* #a0a0a6 on #1d1d1f ≈ 4.8:1 ✓ */
+header p.subtitle{color:#a0a0a6;font-size:1rem}
+
+/* ── Sticky nav ──────────────────────────────────────────────────────────── */
+nav{background:#fff;border-bottom:1px solid #b0b0b5;position:sticky;top:0;z-index:100}
+nav .inner{max-width:860px;margin:0 auto;padding:0 1.5rem;display:flex;flex-wrap:wrap;gap:.25rem;align-items:center}
+/* #0059b3 on #fff ≈ 6.5:1 ✓; min-height 44px per WCAG 2.5.5 */
+nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 .75rem;color:#0059b3;text-decoration:none;font-size:.875rem;border-bottom:3px solid transparent;transition:border-color .15s}
+nav a:hover{border-bottom-color:#0059b3}
+nav a:focus-visible{outline:3px solid #0059b3;outline-offset:-1px;border-radius:4px}
+nav a[aria-current="location"]{border-bottom-color:#0059b3;font-weight:600}
+
+/* ── Cards ───────────────────────────────────────────────────────────────── */
+.card{background:#fff;border-radius:12px;padding:1.75rem 2rem;margin-bottom:1.5rem;border:1px solid #b0b0b5}
+
+/* ── Typography ──────────────────────────────────────────────────────────── */
 h2{font-size:1.4rem;font-weight:700;margin-bottom:1rem;color:#1d1d1f;letter-spacing:-.01em}
 h3{font-size:1.1rem;font-weight:600;margin:1.25rem 0 .5rem;color:#1d1d1f}
 p{margin-bottom:.9rem}
 p:last-child{margin-bottom:0}
 ul,ol{padding-left:1.5rem;margin-bottom:.9rem}
 li{margin-bottom:.35rem}
-kbd{display:inline-block;padding:.15em .4em;font-size:.8em;font-family:"SF Mono",Menlo,monospace;border:1px solid #c6c6c8;border-radius:4px;background:#f2f2f7;color:#1d1d1f;white-space:nowrap;line-height:1.4}
-code{font-family:"SF Mono",Menlo,monospace;font-size:.875em;background:#f0f0f5;padding:.1em .35em;border-radius:4px;color:#1d1d1f}
+
+/* ── Code ────────────────────────────────────────────────────────────────── */
+code{font-family:"SF Mono","Fira Code",Menlo,monospace;font-size:.875em;background:#e0e0ea;padding:.1em .35em;border-radius:4px;color:#1d1d1f}
+kbd{display:inline-block;padding:.15em .4em;font-size:.8em;font-family:"SF Mono",Menlo,monospace;border:1px solid #8e8e93;border-radius:4px;background:#e8e8f0;color:#1d1d1f;white-space:nowrap;line-height:1.4}
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
 .table-wrapper{overflow-x:auto;margin-bottom:.9rem}
 table{width:100%;border-collapse:collapse;font-size:.9375rem}
 caption{text-align:left;font-weight:600;font-size:.9rem;color:#3a3a3c;padding:0 0 .5rem}
-th{background:#f2f2f7;font-weight:600;text-align:left;padding:.6rem .9rem;border:1px solid #d2d2d7;white-space:nowrap}
-td{padding:.6rem .9rem;border:1px solid #d2d2d7;vertical-align:top}
-tr:nth-child(even) td{background:#fafafa}
-.note{background:#e8f0fe;border-left:4px solid #0071e3;padding:.9rem 1.1rem;border-radius:0 8px 8px 0;margin-bottom:.9rem;font-size:.9375rem}
-a:focus,button:focus{outline:3px solid #0071e3;outline-offset:2px;border-radius:3px}
+th{background:#e8e8f0;font-weight:600;text-align:left;padding:.6rem .9rem;border:1px solid #b0b0b5;white-space:nowrap}
+td{padding:.6rem .9rem;border:1px solid #b0b0b5;vertical-align:top}
+tr:nth-child(even) td{background:#eeeef3}
+
+/* ── Callouts ────────────────────────────────────────────────────────────── */
+/* Blue note: #1d1d1f on #cfe2ff ≈ 14:1 ✓; border #0059b3 on white ≈ 6.5:1 ✓ */
+.note{background:#cfe2ff;border-left:4px solid #0059b3;padding:.9rem 1.1rem;border-radius:0 8px 8px 0;margin-bottom:.9rem;font-size:.9375rem}
+/* Green tip: #1d1d1f on #d6f0e8 ≈ 14:1 ✓; border #00704f on white ≈ 6.1:1 ✓ */
+.tip{background:#d6f0e8;border-left:4px solid #00704f;padding:.9rem 1.1rem;border-radius:0 8px 8px 0;margin-bottom:.9rem;font-size:.9375rem}
+
+/* ── Focus ───────────────────────────────────────────────────────────────── */
+a:focus-visible,button:focus-visible{outline:3px solid #0059b3;outline-offset:2px;border-radius:3px}
+
+/* ── Back-to-top button ──────────────────────────────────────────────────── */
+#back-to-top{position:fixed;bottom:2rem;right:2rem;z-index:200;
+  padding:.6rem 1rem;background:#0059b3;color:#fff;border:none;
+  border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,.25);
+  opacity:0;pointer-events:none;transition:opacity .2s}
+#back-to-top.visible{opacity:1;pointer-events:auto}
+#back-to-top:focus-visible{outline:3px solid #fff;outline-offset:2px}
+
+/* ── Motion safety ───────────────────────────────────────────────────────── */
+@media(prefers-reduced-motion:reduce){
+  nav a,#back-to-top{transition:none}
+}
+
+/* ── Dark mode ───────────────────────────────────────────────────────────── */
 @media(prefers-color-scheme:dark){
   body{color:#f5f5f7;background:#000}
   header{background:#161617}
-  header p.subtitle{color:#8e8e93}
-  nav{background:#1c1c1e;border-bottom-color:#38383a}
-  nav a{color:#2997ff}
-  nav a:hover{border-bottom-color:#2997ff}
-  nav a:focus{outline-color:#2997ff}
-  .card{background:#1c1c1e;border-color:#38383a}
+  header p.subtitle{color:#a0a0a6}
+  nav{background:#1c1c1e;border-bottom-color:#48484a}
+  nav a{color:#6eb3ff}
+  nav a:hover,nav a[aria-current="location"]{border-bottom-color:#6eb3ff}
+  nav a:focus-visible{outline-color:#6eb3ff}
+  .card{background:#1c1c1e;border-color:#48484a}
   h2,h3{color:#f5f5f7}
-  code{background:#2c2c2e;color:#f5f5f7}
-  kbd{background:#2c2c2e;border-color:#48484a;color:#f5f5f7}
-  th{background:#2c2c2e;border-color:#38383a}
-  td{border-color:#38383a}
-  tr:nth-child(even) td{background:#232325}
+  code{background:#3c3c42;color:#f5f5f7}
+  kbd{background:#3c3c42;border-color:#636366;color:#f5f5f7}
   caption{color:#ebebf5}
-  .note{background:#0a2a4a;border-left-color:#2997ff}
-  a:focus,button:focus{outline-color:#2997ff}
+  th{background:#2c2c2e;border-color:#48484a;color:#f5f5f7}
+  td{border-color:#48484a}
+  tr:nth-child(even) td{background:#272729}
+  /* #f5f5f7 on #102244 ≈ 12:1 ✓ */
+  .note{background:#102244;border-left-color:#6eb3ff;color:#f5f5f7}
+  /* #f5f5f7 on #0d2e22 ≈ 13.5:1 ✓ */
+  .tip{background:#0d2e22;border-left-color:#4dc99a;color:#f5f5f7}
+  a:focus-visible,button:focus-visible{outline-color:#6eb3ff}
+  #back-to-top{background:#6eb3ff;color:#000}
+  #back-to-top:focus-visible{outline-color:#000}
+}
+
+/* ── Forced colours (Windows High Contrast) ──────────────────────────────── */
+@media(forced-colors:active){
+  .note,.tip{border-left:4px solid Highlight;background:Canvas;color:CanvasText}
+  th{background:ButtonFace;border-color:ButtonText}
+  td{border-color:ButtonText}
+  nav a[aria-current="location"]{border-bottom-color:Highlight}
+  #back-to-top{forced-color-adjust:none;background:Highlight;color:HighlightText}
 }
 </style>
 </head>
@@ -62,7 +119,7 @@ a:focus,button:focus{outline:3px solid #0071e3;outline-offset:2px;border-radius:
 <header>
   <div class="inner">
     <h1>UI Analyzer</h1>
-    <p class="subtitle">User Guide &mdash; Understanding your UI through local AI on Windows</p>
+    <p class="subtitle">User Guide &mdash; Understanding your UI through local AI, on Windows and macOS</p>
   </div>
 </header>
 <nav aria-label="Page sections">
@@ -70,223 +127,379 @@ a:focus,button:focus{outline:3px solid #0071e3;outline-offset:2px;border-radius:
     <a href="#what-it-does">What it does</a>
     <a href="#requirements">Requirements</a>
     <a href="#getting-started">Getting started</a>
-    <a href="#output">Understanding the output</a>
-    <a href="#filetypes">Supported file types</a>
-    <a href="#images">Screenshots and images</a>
+    <a href="#output">Output formats</a>
+    <a href="#filetypes">Supported files</a>
+    <a href="#images">Screenshots</a>
+    <a href="#attachment">Attach screenshots</a>
+    <a href="#validate">Validate</a>
     <a href="#follow-up">Follow-up questions</a>
     <a href="#project-context">Project context</a>
     <a href="#models">AI models</a>
-    <a href="#shortcuts">Keyboard shortcuts</a>
-    <a href="#saving">Saving and copying</a>
+    <a href="#crawl">Crawl localhost</a>
+    <a href="#shortcuts">Shortcuts</a>
+    <a href="#saving">Save &amp; copy</a>
   </div>
 </nav>
 <div class="wrapper">
 <main id="main-content">
 
+<!-- ── What it does ──────────────────────────────────────────────────────── -->
 <section class="card" id="what-it-does" aria-labelledby="h-what">
   <h2 id="h-what">What UI Analyzer does</h2>
-  <p>UI Analyzer reads your app's source code files and describes what the user interface looks like to sighted people. It gives you the information you need to make confident decisions about your app's visual design, layout, colors, and accessibility &mdash; even if you cannot see the screen.</p>
-  <p>It uses a <strong>local AI model served by Ollama</strong>. Your code never leaves your machine. No account, no subscription, and no internet connection is needed for analysis. Choose any model you have pulled locally &mdash; from the tiny 1&nbsp;GB <code>qwen2.5-coder:1.5b</code> for quick checks to the full 7&nbsp;GB <code>qwen2.5-coder:7b</code> for the deepest analysis.</p>
+  <p>UI Analyzer reads your app's source code files and describes what the user interface looks like to sighted people. It gives you the information you need to make confident decisions about your app's visual design, layout, colors, and accessibility &mdash; even if you cannot see the screen yourself.</p>
+  <p>It uses a <strong>local AI model served by Ollama</strong>. Your code never leaves your machine. No account, no subscription, and no internet connection is needed for analysis. You choose any model you have downloaded locally &mdash; from a small, fast 1&nbsp;GB model for quick checks, up to a full 7&nbsp;GB model for the deepest analysis.</p>
   <p>UI Analyzer tells you:</p>
   <ul>
-    <li>What colors are used and what they look like</li>
-    <li>How the layout is arranged and what the spacing looks like to a sighted person</li>
+    <li>What colors are used and what they look like to sighted users</li>
+    <li>How the layout is arranged and how the spacing feels</li>
     <li>What fonts and typography are used</li>
     <li>Whether the interface looks professional and polished</li>
-    <li>Whether there are potential accessibility problems such as low color contrast</li>
+    <li>Whether there are potential accessibility problems such as low color contrast or missing keyboard support</li>
+    <li>Whether your code matches what a screenshot shows &mdash; using the Validate feature</li>
   </ul>
-  <p>Every interactive control has an accessible name, every button meets the 44&nbsp;&times;&nbsp;44 minimum touch target, every dialog can be operated with the keyboard alone, and every screen reader (NVDA, JAWS, Narrator, VoiceOver) can read every screen. The app is built WCAG&nbsp;2.2&nbsp;AA accessible end to end.</p>
+  <p>Every interactive control has an accessible name, every button meets the minimum 44&times;44 touch target size, every dialog can be operated with the keyboard alone, and every screen reader (NVDA, JAWS, Narrator, VoiceOver) can read every screen. The app is built to WCAG&nbsp;2.2&nbsp;AA standards end to end.</p>
 </section>
 
+<!-- ── Requirements ──────────────────────────────────────────────────────── -->
 <section class="card" id="requirements" aria-labelledby="h-req">
   <h2 id="h-req">Requirements</h2>
   <ul>
-    <li>Windows 10 or 11 (64-bit). macOS 14+ is also supported for development.</li>
-    <li>Python 3.10 or later &mdash; <a href="https://www.python.org/downloads/">python.org</a></li>
+    <li>Windows 10 or 11 (64-bit), or macOS 14 or later</li>
+    <li>Python 3.10 or later &mdash; <a href="https://www.python.org/downloads/">python.org/downloads</a></li>
     <li>Ollama installed and running &mdash; <a href="https://ollama.com/download">ollama.com/download</a></li>
-    <li>At least one model pulled locally &mdash; for example <code>ollama pull qwen2.5-coder:7b</code></li>
-    <li>(Optional) Tesseract OCR for screenshot analysis &mdash; see the <a href="#images">Screenshots section</a></li>
-    <li>(Windows only) Edge WebView2 Runtime &mdash; ships with Windows 11; installer at <a href="https://developer.microsoft.com/en-us/microsoft-edge/webview2/">Microsoft Edge WebView2</a></li>
+    <li>At least one model pulled locally &mdash; for example: <code>ollama pull qwen2.5-coder:7b</code></li>
+    <li>(Optional) Tesseract OCR for screenshot text reading &mdash; see the <a href="#images">Screenshots section</a></li>
+    <li>(Windows only) Edge WebView2 Runtime &mdash; ships automatically with Windows 11; installer available at Microsoft's Edge WebView2 page for Windows 10</li>
   </ul>
-  <p>To verify Ollama is running, open a terminal and run <kbd>ollama list</kbd>. You should see at least one model name. If the list is empty, pull one first: <code>ollama pull qwen2.5-coder:7b</code>.</p>
+  <p>To check that Ollama is running, open a terminal and type <kbd>ollama list</kbd>. You should see at least one model name. If the list is empty, pull a model first: <code>ollama pull qwen2.5-coder:7b</code>.</p>
   <div class="note">If Ollama is not running when you start UI Analyzer, the app shows a clear message telling you how to start it and which model to install. The window still opens so you can read the message with your screen reader.</div>
 </section>
 
+<!-- ── Getting started ───────────────────────────────────────────────────── -->
 <section class="card" id="getting-started" aria-labelledby="h-start">
   <h2 id="h-start">Getting started</h2>
   <ol>
-    <li>Open UI Analyzer. If you are on Windows, the bundled app icon appears in the title bar and on the taskbar.</li>
-    <li>Press <kbd>Ctrl O</kbd> to open a folder dialog, or drag a folder from File Explorer and drop it onto the sidebar.</li>
-    <li>The sidebar on the left lists all supported UI files found in that folder. Use <kbd>Up</kbd> and <kbd>Down</kbd> to move through the list; NVDA / JAWS / Narrator / VoiceOver will read each file's name, type, and status (Ready / Analyzing / Analyzed / Error).</li>
-    <li>Select a file in the sidebar and press <kbd>Enter</kbd>, or click the <strong>Analyze</strong> button (or press <kbd>Ctrl R</kbd>).</li>
-    <li>The local model streams a description in real time. The output view announces "Analysis in progress" while it streams, then "Analysis complete" when it finishes. Focus moves to the output view so your screen reader begins reading the result.</li>
-    <li>Read the output, copy it, or save it as a file.</li>
+    <li>Open UI Analyzer. If you are on Windows, the app icon appears in the title bar and on the taskbar.</li>
+    <li>Press <kbd>Ctrl O</kbd> (Windows) or <kbd>Cmd O</kbd> (macOS) to open a folder dialog, or drag a folder from File Explorer or Finder and drop it onto the sidebar.</li>
+    <li>The sidebar on the left lists all supported UI files found in that folder. Use the <kbd>Up</kbd> and <kbd>Down</kbd> arrow keys to move through the list. Your screen reader announces each file's name, type, and status (Ready, Analyzing, Analyzed, or Error).</li>
+    <li>Select a file and press <kbd>Enter</kbd>, or press <kbd>Ctrl R</kbd> / <kbd>Cmd R</kbd> to analyze it.</li>
+    <li>The AI model streams a description in real time. While streaming, your screen reader announces "Analysis in progress". When the analysis is complete, it announces "Analysis complete" and focus moves to the output view so you can begin reading.</li>
+    <li>Read the output, copy it with <kbd>Ctrl Shift C</kbd>, or save it with <kbd>Ctrl S</kbd>.</li>
   </ol>
-  <h3>Drag and drop from File Explorer / Finder</h3>
-  <p>You can drag a folder from File Explorer (Windows) or Finder (macOS) and drop it anywhere on the sidebar. The folder becomes the active project folder and is scanned immediately.</p>
+
   <h3>Keyboard-first workflow</h3>
-  <p>Every action is reachable with the keyboard. The most common shortcuts are <kbd>Ctrl O</kbd> (open folder), <kbd>Ctrl R</kbd> (analyze / re-analyze), <kbd>Ctrl M</kbd> (choose AI model), <kbd>Ctrl Shift A</kbd> (build project context), <kbd>Ctrl Shift I</kbd> (ask project question), <kbd>Ctrl Shift C</kbd> (copy output), and <kbd>Ctrl S</kbd> (save output). See the <a href="#shortcuts">Keyboard shortcuts</a> section for the full list.</p>
+  <p>Every action is reachable with the keyboard. The most common shortcuts: <kbd>Ctrl O</kbd> to open a folder, <kbd>Ctrl R</kbd> to analyze, <kbd>Ctrl Shift V</kbd> to validate against a screenshot, <kbd>Ctrl Shift A</kbd> to build project context, <kbd>Ctrl Shift I</kbd> to ask a project question, <kbd>Ctrl Shift C</kbd> to copy output, and <kbd>Ctrl S</kbd> to save. On macOS, replace <kbd>Ctrl</kbd> with <kbd>Cmd</kbd>. See the full <a href="#shortcuts">Keyboard shortcuts</a> table.</p>
+
+  <h3>Drag and drop</h3>
+  <p>You can drag any folder from File Explorer (Windows) or Finder (macOS) and drop it anywhere on the sidebar. UI Analyzer immediately scans the folder and lists the files it finds.</p>
 </section>
 
+<!-- ── Output formats ────────────────────────────────────────────────────── -->
 <section class="card" id="output" aria-labelledby="h-output">
-  <h2 id="h-output">Understanding the output</h2>
+  <h2 id="h-output">Output formats</h2>
+
   <h3>Prose mode (default)</h3>
-  <p>A full written description in five sections:</p>
+  <p>A full written description in six sections, each with a navigable heading so you can jump between them with your screen reader's heading navigation:</p>
   <ol>
-    <li><strong>Visual Appearance</strong> &mdash; Colors (name and hex code), layout, fonts, spacing, icons, and overall composition.</li>
-    <li><strong>Ease of Use for Sighted Users</strong> &mdash; Is the interface clear and easy to navigate visually? Are interactive elements obvious?</li>
-    <li><strong>Professional Quality</strong> &mdash; Does it look polished? The model gives a direct verdict with reasons.</li>
-    <li><strong>Accessibility</strong> &mdash; Color contrast, touch target sizes, keyboard navigation, and accessibility labels.</li>
-    <li><strong>Other Important Details</strong> &mdash; Animations, error states, empty states, conditional UI.</li>
+    <li><strong>Visual Appearance</strong> &mdash; Colors (name and hex code), layout, fonts, spacing, icons, and overall composition described in plain language.</li>
+    <li><strong>Ease of Use for Sighted Users</strong> &mdash; Is the interface clear to navigate visually? Are interactive elements obvious? Is there enough visual feedback?</li>
+    <li><strong>Professional Quality</strong> &mdash; Does it look polished? The model gives a direct verdict (Polished / Mostly Polished / Needs Polish) with specific reasons.</li>
+    <li><strong>Accessibility</strong> &mdash; Color contrast ratios, touch target sizes, keyboard navigation, and presence of accessibility labels. The model suggests specific code fixes for your framework.</li>
+    <li><strong>Other Important Details</strong> &mdash; Animations, error states, empty states, conditional UI, and platform-specific behaviors.</li>
+    <li><strong>Screen Layout</strong> &mdash; A region-by-region description from top to bottom, naming each zone and what a sighted user sees in it.</li>
   </ol>
   <p>Use the <strong>Format</strong> dropdown at the top of the detail panel to switch between Prose and Table.</p>
+
   <h3>Table mode</h3>
-  <p>A structured table of every UI element. Switch to Table mode, then choose either format from the second dropdown:</p>
+  <p>A structured table of every UI element, covering element type, label text, color (name + hex), position, whether it is interactive, spacing/size, and notes. Choose either sub-format:</p>
   <ul>
-    <li><strong>Markdown table</strong> &mdash; Plain text, good for copying or reading with a screen reader.</li>
-    <li><strong>HTML table</strong> &mdash; A rendered accessible table with proper &lt;table&gt;, &lt;thead&gt;, &lt;tbody&gt;, &lt;th scope&gt; semantics. NVDA / JAWS / Narrator / VoiceOver all announce it as a table and let you navigate cell by cell. The HTML output also starts with a <strong>TL;DR &lt;details&gt; block</strong> &mdash; a 3&ndash;5 sentence summary you can read first before expanding into the detailed sections.</li>
+    <li><strong>Markdown table</strong> &mdash; Plain text. Good for copying into documentation or reading with a screen reader in a plain text editor.</li>
+    <li><strong>HTML table</strong> &mdash; A rendered accessible table with correct <code>&lt;table&gt;</code>, <code>&lt;thead&gt;</code>, <code>&lt;th scope&gt;</code> semantics. NVDA, JAWS, Narrator, and VoiceOver all announce it as a proper table so you can navigate cell by cell with arrow keys. The HTML output starts with a <strong>TL;DR summary block</strong> &mdash; 3 to 5 sentences giving the headline findings &mdash; before the full tables.</li>
   </ul>
+
   <h3>Design specification files</h3>
-  <p>Markdown files (such as <code>design.md</code>) are automatically recognized as design specs and produce a design-focused output with five sections:</p>
-  <ol>
-    <li>Color System</li>
-    <li>Typography</li>
-    <li>Spacing, Layout, and Grid</li>
-    <li>Components and Patterns</li>
-    <li>Accessibility Design Decisions</li>
-  </ol>
+  <p>Markdown files that are clearly design specifications (not README or changelog files) automatically receive a design-focused analysis with five sections: Color System, Typography, Spacing &amp; Layout, Components &amp; Patterns, and Accessibility Design Decisions. This is useful for reviewing a design token file or a design system document.</p>
 </section>
 
+<!-- ── Supported file types ───────────────────────────────────────────────── -->
 <section class="card" id="filetypes" aria-labelledby="h-filetypes">
   <h2 id="h-filetypes">Supported file types</h2>
-  <p>UI Analyzer recognises the following UI file types. Files are picked up automatically when you open a folder.</p>
+  <p>UI Analyzer recognizes the following UI file types and picks them up automatically when you open a folder.</p>
   <div class="table-wrapper">
     <table>
       <caption>Supported file types by extension</caption>
-      <thead><tr><th scope="col">Type</th><th scope="col">Extensions</th><th scope="col">Notes</th></tr></thead>
+      <thead>
+        <tr>
+          <th scope="col">Type</th>
+          <th scope="col">Extensions</th>
+          <th scope="col">Notes</th>
+        </tr>
+      </thead>
       <tbody>
-        <tr><td>SwiftUI</td><td>.swift</td><td>Must contain SwiftUI view code</td></tr>
+        <tr><td>SwiftUI</td><td>.swift</td><td>Must contain SwiftUI view keywords</td></tr>
         <tr><td>Storyboard / XIB</td><td>.storyboard, .xib</td><td>Interface Builder files</td></tr>
-        <tr><td>HTML / CSS</td><td>.html, .htm, .css</td><td>Web UI files</td></tr>
+        <tr><td>HTML / CSS</td><td>.html, .htm, .css</td><td>Web UI files; static sites included</td></tr>
         <tr><td>React / JSX</td><td>.jsx, .tsx</td><td>Includes React Native components</td></tr>
         <tr><td>Vue</td><td>.vue</td><td>Single-file components</td></tr>
         <tr><td>Svelte</td><td>.svelte</td><td>Svelte components</td></tr>
         <tr><td>Python</td><td>.py</td><td>Must import tkinter, PyQt6, PySide6, wx, or kivy</td></tr>
         <tr><td>JavaScript</td><td>.js</td><td>Must reference React, Angular, or DOM APIs</td></tr>
         <tr><td>TypeScript</td><td>.ts</td><td>Must reference React or Angular decorators</td></tr>
-        <tr><td>Markdown</td><td>.md, .markdown</td><td>Design specs get a specialized colour/typography prompt</td></tr>
-        <tr><td>Screenshots</td><td>.png, .jpg, .heic, .webp, .gif, etc.</td><td>OCR + layout inference; max 10 MB</td></tr>
+        <tr><td>Markdown design spec</td><td>.md, .markdown</td><td>Non-README Markdown gets specialized color/typography prompt</td></tr>
+        <tr><td>Screenshots / images</td><td>.png, .jpg, .heic, .webp, .gif, .tiff, .bmp</td><td>Up to 10&nbsp;MB; analyzed via OCR and AI description</td></tr>
       </tbody>
     </table>
   </div>
 
   <h3>Framework-specific accessibility suggestions</h3>
-  <p>UI Analyzer detects which UI framework your file uses and injects a relevant accessibility API reference into the analysis prompt, so suggestions are specific and actionable. The set of supported frameworks covers the full cross-platform landscape:</p>
+  <p>UI Analyzer detects which UI framework your file uses and injects a relevant accessibility API reference into the analysis prompt. This means suggestions are specific and actionable, not generic. Supported frameworks include:</p>
   <ul>
-    <li><strong>SwiftUI</strong> &mdash; <code>.accessibilityLabel</code>, <code>@AccessibilityFocusState</code>, touch targets, <code>AccessibilityNotification</code>, and more</li>
-    <li><strong>React / React Native</strong> &mdash; ARIA attributes, <code>accessibilityLabel</code>, <code>accessibilityRole</code>, focus management with <code>useRef</code></li>
-    <li><strong>Vue / Svelte</strong> &mdash; <code>:aria-label</code>, <code>aria-live</code>, router announcements, <code>:focus-visible</code></li>
-    <li><strong>HTML / CSS</strong> &mdash; Semantic elements, <code>&lt;dialog&gt;</code>, <code>&lt;details&gt;</code>, ARIA, dark mode, reduced motion</li>
-    <li><strong>PyQt6 / PySide6 / tkinter / wxPython</strong> &mdash; <code>setAccessibleName</code>, <code>setFocusPolicy</code>, <code>SetName</code> / <code>SetToolTip</code>, keyboard bindings</li>
-    <li><strong>WinForms / WPF / .NET MAUI / Avalonia</strong> &mdash; <code>AccessibleName</code>, <code>AutomationProperties.Name</code>, <code>SemanticProperties.Description</code>, <code>KeyboardNavigation.TabIndex</code></li>
+    <li><strong>SwiftUI</strong> &mdash; <code>.accessibilityLabel</code>, <code>.accessibilityHint</code>, <code>.accessibilityAddTraits</code>, <code>@AccessibilityFocusState</code>, touch targets, <code>AccessibilityNotification</code></li>
+    <li><strong>React / React Native</strong> &mdash; ARIA attributes, <code>accessibilityLabel</code>, <code>accessibilityRole</code>, <code>useRef</code> focus management, <code>aria-live</code></li>
+    <li><strong>Vue / Svelte</strong> &mdash; <code>:aria-label</code>, <code>aria-live</code>, <code>:focus-visible</code>, reduced-motion</li>
+    <li><strong>HTML / CSS</strong> &mdash; Semantic elements, <code>&lt;dialog&gt;</code>, ARIA, dark mode, reduced motion</li>
+    <li><strong>wxPython / PyQt6 / PySide6 / tkinter</strong> &mdash; <code>SetName</code>, <code>SetToolTip</code>, <code>setAccessibleName</code>, keyboard bindings</li>
+    <li><strong>WinForms / WPF / .NET MAUI / Avalonia</strong> &mdash; <code>AccessibleName</code>, <code>AutomationProperties.Name</code>, <code>SemanticProperties.Description</code></li>
   </ul>
 
   <h3>Automated color contrast check</h3>
-  <p>UI Analyzer extracts every hex color from your source file, computes the exact WCAG contrast ratio against white, black, and dark backgrounds, and flags anything that fails the AA standard (4.5:1 for normal text, 3:1 for large text and UI components). Where a color fails, it also suggests an alternative color &mdash; with the same hue &mdash; that just passes. These exact ratios and suggestions appear in the Accessibility section of all three output formats.</p>
+  <p>Before sending a file to the AI, UI Analyzer extracts every hex color from your source file and computes the WCAG contrast ratio against white, black, and dark backgrounds. Any color that fails the AA standard (4.5:1 for normal text, 3:1 for large text and UI components) is flagged with a suggested replacement &mdash; same hue, adjusted lightness &mdash; that just passes. These ratios and suggestions appear in the Accessibility section of all output formats.</p>
 </section>
 
+<!-- ── Screenshots and images ────────────────────────────────────────────── -->
 <section class="card" id="images" aria-labelledby="h-images">
-  <h2 id="h-images">Screenshots and images</h2>
-  <p>UI Analyzer can analyze screenshots and other images of user interfaces. Supported formats include PNG, JPG, HEIC, WEBP, TIFF, BMP, and GIF (up to 10 MB).</p>
-  <p>To add an image, open a folder that contains image files &mdash; they appear automatically in the sidebar.</p>
+  <h2 id="h-images">Analyzing screenshots and images</h2>
+  <p>UI Analyzer can analyze screenshots of user interfaces as standalone files. Supported formats: PNG, JPG, HEIC, WEBP, TIFF, BMP, and GIF (up to 10&nbsp;MB). Drop a folder containing image files and they appear in the sidebar automatically.</p>
   <p>When you analyze an image, UI Analyzer:</p>
   <ol>
-    <li>Detects the image dimensions and identifies the likely device type (such as iPhone or iPad based on screen proportions).</li>
-    <li>Reads all visible text using Tesseract OCR (Windows) or the built-in OCR, noting where each piece of text appears on screen (for example: "top-left", "center", "bottom-right").</li>
-    <li>Passes this information to the local model to generate a complete visual description.</li>
+    <li>Detects the image dimensions and notes the likely device type (for example, a 390&times;844 image is likely an iPhone 14).</li>
+    <li>Reads all visible text using Tesseract OCR, noting where each piece of text appears on screen (for example: "top-left", "center", "bottom-right").</li>
+    <li>Passes the image and text layout to the local AI model to generate a complete visual description in the same six-section format as source file analysis.</li>
   </ol>
-  <p><strong>Windows &mdash; install Tesseract:</strong> download the installer from <a href="https://github.com/UB-Mannheim/tesseract/wiki">github.com/UB-Mannheim/tesseract/wiki</a> and make sure the <code>tesseract</code> command is on your <code>PATH</code>.</p>
-  <p><strong>macOS &mdash; install Tesseract:</strong> <code>brew install tesseract</code></p>
-  <div class="note">Image analysis is text-based. For best results with images that have very little text, add a descriptive title or question in the follow-up field after analysis to ask about specific visual elements.</div>
+
+  <h3>Installing Tesseract (optional but recommended)</h3>
+  <ul>
+    <li><strong>Windows:</strong> download the installer from the UB Mannheim Tesseract GitHub page and make sure the <code>tesseract</code> command is on your <code>PATH</code>.</li>
+    <li><strong>macOS:</strong> run <code>brew install tesseract</code> in Terminal.</li>
+  </ul>
+  <div class="note">If Tesseract is not installed, UI Analyzer still works but image analysis is less accurate. The model will infer layout from any text it can see in the image bytes (if using a vision-capable model), but won't have precise text positions.</div>
 </section>
 
+<!-- ── Screenshot attachment ─────────────────────────────────────────────── -->
+<section class="card" id="attachment" aria-labelledby="h-attach">
+  <h2 id="h-attach">Attaching a screenshot to a source file</h2>
+  <p>You can attach a screenshot to any source code file in the sidebar. Once attached, the screenshot is included with every analysis of that file &mdash; the AI model can see or read both the code and the visual output at the same time. This is useful for catching discrepancies between what the code says and what the screen actually shows.</p>
+
+  <h3>How to attach a screenshot</h3>
+  <ol>
+    <li>In the sidebar, right-click (or press the context menu key) on any source file.</li>
+    <li>Choose <strong>Attach screenshot&hellip;</strong> from the menu.</li>
+    <li>Select an image file from the dialog. The image is copied to your project folder with the name <code>filename.context.png</code> (for example, <code>LoginView.swift.context.png</code>).</li>
+    <li>The sidebar item shows a camera icon to indicate that a screenshot is attached.</li>
+    <li>Run the analysis as normal with <kbd>Ctrl R</kbd>. The model now receives both the source code and the screenshot.</li>
+  </ol>
+
+  <h3>How attachment affects analysis</h3>
+  <p>If the model you are using supports vision (multimodal) input, the image is sent directly alongside the source code as a binary attachment. If the model only supports text, UI Analyzer automatically falls back to OCR text extraction from the screenshot and injects the text transcript into the prompt instead. Either way, you get the best analysis available for the model you have chosen.</p>
+
+  <h3>Removing a screenshot attachment</h3>
+  <p>Right-click the file in the sidebar and choose <strong>Remove attachment</strong>. The screenshot file is removed from the project folder and the binding is cleared. Future analyses of the file will use the source code only.</p>
+
+  <div class="tip">Attaching a screenshot is especially powerful before running Validate. The AI can compare the analysis it produced from the code against the actual rendered screen to catch things that look different than expected.</div>
+</section>
+
+<!-- ── Validate against screenshot ───────────────────────────────────────── -->
+<section class="card" id="validate" aria-labelledby="h-validate">
+  <h2 id="h-validate">Validate against screenshot</h2>
+  <p>After analyzing a source code file that has a screenshot attached, you can ask UI Analyzer to <strong>validate</strong> its analysis. Validation sends the previous analysis text and the attached screenshot to the AI model at the same time, and asks the model to review what it said in the light of what it can actually see.</p>
+  <p>Press <kbd>Ctrl Shift V</kbd> (Windows) or <kbd>Cmd Shift V</kbd> (macOS) to start validation. A notification appears while validation is in progress, and a second notification announces "Validation complete" when it finishes.</p>
+
+  <h3>What the Validation Result dialog shows</h3>
+  <p>The result appears in an accessible dialog with three sections, each announced as a heading by your screen reader:</p>
+  <ul>
+    <li><strong>Stands By</strong> &mdash; Claims from the original analysis that the screenshot confirms are correct.</li>
+    <li><strong>Retracts</strong> &mdash; Claims from the original analysis that the screenshot contradicts or that are misleading. Each retraction includes a brief explanation of what was wrong.</li>
+    <li><strong>Additions</strong> &mdash; New observations that are visible in the screenshot but could not be inferred from the source code alone, such as actual rendered colors, image content, or layout subtleties.</li>
+  </ul>
+  <p>Use your screen reader's heading navigation to jump between the three sections. Every item in each section is read as a separate list item for easy navigation.</p>
+  <p>The dialog has a <strong>Copy</strong> button (<kbd>Ctrl C</kbd> also works from within the dialog) that copies the full validation result as formatted plain text to the clipboard, and a <strong>Close</strong> button (or <kbd>Escape</kbd>) to dismiss it.</p>
+
+  <div class="note">Validation requires a screenshot to be attached to the file. If no screenshot is attached, you will see a message explaining how to attach one. See the <a href="#attachment">Attaching a screenshot</a> section.</div>
+</section>
+
+<!-- ── Follow-up questions ────────────────────────────────────────────────── -->
 <section class="card" id="follow-up" aria-labelledby="h-followup">
-  <h2 id="h-followup">Asking follow-up questions</h2>
-  <p>After an analysis finishes, a text field labeled <strong>Follow-up question</strong> appears at the bottom of the detail panel. Use <kbd>Tab</kbd> to move focus to it, type your question, and press <kbd>Enter</kbd> (or click the <strong>Ask</strong> button).</p>
-  <p>Example questions:</p>
+  <h2 id="h-followup">Follow-up questions</h2>
+  <p>After an analysis finishes, a text field labeled <strong>Follow-up question</strong> appears at the bottom of the detail panel. Press <kbd>Tab</kbd> to move focus to it, type your question, and press <kbd>Enter</kbd> (or click <strong>Ask</strong>).</p>
+  <p>The AI model remembers the full conversation for each file, so you do not need to repeat context between questions. Follow-up answers appear in the output area with <strong>Question</strong> and <strong>Answer</strong> headings so you can navigate between them with your screen reader's heading key.</p>
+  <p>Example questions to try:</p>
   <ul>
     <li>"What is the exact hex color of the primary button?"</li>
     <li>"Does the text contrast meet WCAG AA standards?"</li>
     <li>"How large is the navigation bar in points?"</li>
-    <li>"What happens when the user taps the back button?"</li>
-    <li>"Is this image showing an iPhone or iPad?"</li>
+    <li>"What would a sighted person notice first when they open this screen?"</li>
+    <li>"Is there enough visual difference between the active and inactive tab states?"</li>
+    <li>"What does the empty state look like?"</li>
   </ul>
-  <p>The model remembers the full conversation for each file, so you do not need to repeat context between questions. Follow-up answers are emitted as <strong>HTML fragments with &lt;h2&gt;Question&lt;/h2&gt; / &lt;h2&gt;Answer&lt;/h2&gt; headings</strong>, so you can use NVDA / JAWS / Narrator / VoiceOver heading navigation to jump between Question and Answer blocks and between individual list items.</p>
+
+  <div class="tip">You can ask as many follow-up questions as you like. The conversation is automatically compressed in the background if it gets very long, so the model always has enough context to answer accurately without you needing to do anything.</div>
 </section>
 
+<!-- ── Project context ────────────────────────────────────────────────────── -->
 <section class="card" id="project-context" aria-labelledby="h-context">
-  <h2 id="h-context">Build Project Context</h2>
-  <p>Press <kbd>Ctrl Shift A</kbd> or click <strong>Build Project Context</strong> at the bottom of the sidebar to analyze all files in your project folder at once. This creates a summary of every screen so you can ask cross-project questions:</p>
+  <h2 id="h-context">Build Project Context and ask project questions</h2>
+  <p>Press <kbd>Ctrl Shift A</kbd> (Windows) or <kbd>Cmd Shift A</kbd> (macOS), or click <strong>Build Project Context</strong> at the bottom of the sidebar. UI Analyzer reads every file in the project folder and generates a short 4-line summary of each screen covering its purpose, colors, visual quality, and any issues found.</p>
+  <p>The status bar shows the build progress in real time ("Building context: 3 of 8&hellip;") and your screen reader announces the live count. Building is quick &mdash; typically a few seconds per file.</p>
+  <p>Once built, press <kbd>Ctrl Shift I</kbd> (Windows) or <kbd>Cmd Shift I</kbd> (macOS) to open the project question dialog and ask anything about the project as a whole:</p>
   <ul>
-    <li>"Is the color consistent across all screens?"</li>
+    <li>"Is the color palette consistent across all screens?"</li>
     <li>"Which screens have accessibility problems?"</li>
     <li>"Does the typography look the same throughout the app?"</li>
+    <li>"Are the button styles consistent or do they vary between screens?"</li>
+    <li>"What is the overall visual quality of this app?"</li>
   </ul>
-  <p>The status bar shows the build progress in real time (e.g. "Building context: 3/8&hellip;") and your screen reader announces the live count. Once the build is complete, press <kbd>Ctrl Shift I</kbd> to open the project question dialog and ask anything about the project as a whole.</p>
+  <p>Project question answers are formatted with HTML headings so you can navigate between the Question and Answer sections with your screen reader's heading key.</p>
+
+  <div class="note">Project Context is built once and reused until you open a different folder or rebuild it. If you add new files to the project, rebuild the context to include them.</div>
 </section>
 
+<!-- ── Localhost Site Crawler ────────────────────────────────────────────── -->
+<section class="card" id="crawl" aria-labelledby="h-crawl">
+  <h2 id="h-crawl">Crawl a localhost site</h2>
+  <p>The Localhost Site Crawler lets you point UI Analyzer at a running local web server &mdash; for example <code>http://localhost:3000</code> &mdash; and automatically fetch every linked page. Each page is saved as an HTML file and added to the sidebar as a file you can select and analyze. This is useful for auditing a local web application, a static site generator output, or a server-side rendered app without having to open and drag individual files.</p>
+
+  <h3>How to crawl a site</h3>
+  <ol>
+    <li>Start your local web server so it is accepting connections (for example: <code>python -m http.server 3000</code>).</li>
+    <li>In UI Analyzer, open <strong>File &rarr; Crawl Localhost Site&hellip;</strong> or press <kbd>Ctrl Shift W</kbd> (Windows) or <kbd>Cmd Shift W</kbd> (macOS).</li>
+    <li>In the dialog that appears, enter the starting URL such as <code>http://localhost:3000</code>.</li>
+    <li>Optionally adjust the settings:
+      <ul>
+        <li><strong>Max pages</strong> &mdash; how many pages to fetch before stopping (default: 50).</li>
+        <li><strong>Max depth</strong> &mdash; how many link-levels deep to follow from the start page (default: 3).</li>
+        <li><strong>Pause between requests</strong> &mdash; a small delay between each page fetch to avoid overloading the server (default: 0.5 seconds).</li>
+      </ul>
+    </li>
+    <li>Click <strong>Start Crawl</strong>. The dialog closes and the crawl begins in the background.</li>
+  </ol>
+
+  <h3>During the crawl</h3>
+  <p>The status bar at the bottom of the window shows live progress, for example: <em>Crawling: 4/12 pages &mdash; http://localhost:3000/about</em>. Your screen reader announces each update automatically.</p>
+  <p>Press <kbd>Escape</kbd> at any time to cancel the crawl. Pages already fetched remain in the sidebar.</p>
+
+  <h3>After the crawl completes</h3>
+  <p>When the crawl finishes, a notification appears and the status bar confirms completion. The crawled pages are appended to the existing sidebar list &mdash; any files you already had open are still there. The first crawled page is selected automatically so you can begin reading or analyzing straight away.</p>
+  <p>Each page appears in the sidebar with the filename derived from its URL path. You can select any page and analyze it with <kbd>Ctrl R</kbd> (Windows) or <kbd>Cmd R</kbd> (macOS) just as you would with any other file.</p>
+
+  <div class="note">The crawler uses static HTTP fetching. It downloads the raw HTML the server sends, exactly as a browser would receive it before JavaScript runs. This means it works well for static HTML sites, server-side rendered apps (such as those built with Django, Rails, or Astro), and documentation sites. React, Vue, or Angular apps that render entirely in the browser will show the unrendered source HTML rather than the finished page content.</div>
+
+  <div class="tip">A static three-page test site is included with the app at <code>tests/fixtures/sample-site/</code>. To try a quick crawl: open a terminal, run <code>python -m http.server 3000</code> from that folder, then use <strong>File &rarr; Crawl Localhost Site&hellip;</strong> and enter <code>http://localhost:3000</code>.</div>
+</section>
+
+<!-- ── AI models ─────────────────────────────────────────────────────────── -->
 <section class="card" id="models" aria-labelledby="h-models">
   <h2 id="h-models">Choosing an AI model</h2>
-  <p>UI Analyzer works with any model you have pulled into Ollama. Open the File menu and choose <strong>Choose AI Model&hellip;</strong>, or press <kbd>Ctrl M</kbd>. The model picker shows every installed model with a short description of what it is best for, minimum RAM, and on-disk size. Models marked <strong>(recommended)</strong> are the best fit for the file type currently selected in the sidebar.</p>
-  <p>Suggested models:</p>
+  <p>UI Analyzer works with any model you have downloaded into Ollama. Open the <strong>File</strong> menu and choose <strong>Choose AI Model&hellip;</strong>, or press <kbd>Ctrl M</kbd> (Windows) / <kbd>Cmd M</kbd> (macOS). The model picker shows every installed model and marks the best fit for the file type you currently have selected.</p>
+  <p>Your model choice is saved automatically and remembered the next time you open the app. To change it, just open the picker again.</p>
+  <p>Suggested models to pull:</p>
   <ul>
-    <li><strong>qwen2.5-coder:7b</strong> &mdash; best balance of speed and quality for most analysis. Needs about 8&nbsp;GB of RAM.</li>
-    <li><strong>qwen2.5-coder:3b</strong> &mdash; faster, lower memory, slightly less detailed. Good on 8&nbsp;GB laptops.</li>
-    <li><strong>llama3.1:8b</strong> &mdash; strong general model, slightly slower than the Qwen coders.</li>
-    <li><strong>qwen2.5-coder:1.5b</strong> &mdash; very fast, very small. Useful for quick checks when you don't need depth.</li>
+    <li><strong>qwen2.5-coder:7b</strong> &mdash; Best balance of speed and quality for source code analysis. Needs about 8&nbsp;GB of RAM. Pull it with: <code>ollama pull qwen2.5-coder:7b</code></li>
+    <li><strong>qwen2.5-coder:3b</strong> &mdash; Faster and lower memory. Good on 8&nbsp;GB laptops.</li>
+    <li><strong>llama3.2-vision:11b</strong> &mdash; Multimodal model that can see screenshots directly. Good for the Validate feature.</li>
+    <li><strong>qwen2.5-coder:1.5b</strong> &mdash; Very fast and very small. Useful for quick checks.</li>
   </ul>
-  <p>To install a model, open a terminal and run, for example, <code>ollama pull qwen2.5-coder:7b</code>. Then click <strong>Refresh model list</strong> in the model picker to see it appear.</p>
-  <div class="note">If you change the model while an analysis is in progress, the new model takes effect on the next file. In-flight analyses finish on the old model so nothing is lost.</div>
+  <p>To install a model, open Terminal and run: <code>ollama pull model-name</code>. Then click <strong>Refresh model list</strong> in the model picker to see it appear.</p>
+
+  <h3>Settings</h3>
+  <p>Open <strong>File &rarr; Settings&hellip;</strong> to configure the Ollama server URL (useful if Ollama is running on a different port or machine), and to manage API keys if you want to use a cloud AI provider (Anthropic Claude or OpenAI) instead of a local model.</p>
+
+  <div class="note">If you change the model while an analysis is in progress, the new model takes effect on the next file. In-flight analyses finish on the previous model so nothing is interrupted or lost.</div>
 </section>
 
+<!-- ── Keyboard shortcuts ─────────────────────────────────────────────────── -->
 <section class="card" id="shortcuts" aria-labelledby="h-shortcuts">
   <h2 id="h-shortcuts">Keyboard shortcuts</h2>
-  <p>Every action has a keyboard shortcut. The shortcuts work the same on Windows and macOS &mdash; <kbd>Ctrl</kbd> on Windows maps to <kbd>Cmd</kbd> on macOS.</p>
+  <p>Every action has a keyboard shortcut. On Windows use <kbd>Ctrl</kbd>; on macOS use <kbd>Cmd</kbd> in its place.</p>
   <div class="table-wrapper">
     <table>
       <caption>All keyboard shortcuts for UI Analyzer</caption>
       <thead>
         <tr>
           <th scope="col">Action</th>
-          <th scope="col">Shortcut</th>
+          <th scope="col">Windows</th>
+          <th scope="col">macOS</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td>Open Folder</td><td><kbd>Ctrl O</kbd></td></tr>
-        <tr><td>Analyze or Re-analyze</td><td><kbd>Ctrl R</kbd></td></tr>
-        <tr><td>Open the selected file in the sidebar</td><td><kbd>Enter</kbd></td></tr>
-        <tr><td>Build Project Context</td><td><kbd>Ctrl Shift A</kbd></td></tr>
-        <tr><td>Ask a project question</td><td><kbd>Ctrl Shift I</kbd></td></tr>
-        <tr><td>Copy description</td><td><kbd>Ctrl Shift C</kbd></td></tr>
-        <tr><td>Save description as file</td><td><kbd>Ctrl S</kbd></td></tr>
-        <tr><td>Choose AI Model</td><td><kbd>Ctrl M</kbd></td></tr>
-        <tr><td>Quit</td><td><kbd>Ctrl Q</kbd></td></tr>
+        <tr><td>Open folder</td><td><kbd>Ctrl O</kbd></td><td><kbd>Cmd O</kbd></td></tr>
+        <tr><td>Analyze or re-analyze selected file</td><td><kbd>Ctrl R</kbd></td><td><kbd>Cmd R</kbd></td></tr>
+        <tr><td>Analyze selected file (from file list)</td><td><kbd>Enter</kbd></td><td><kbd>Enter</kbd></td></tr>
+        <tr><td>Validate against screenshot</td><td><kbd>Ctrl Shift V</kbd></td><td><kbd>Cmd Shift V</kbd></td></tr>
+        <tr><td>Build Project Context</td><td><kbd>Ctrl Shift A</kbd></td><td><kbd>Cmd Shift A</kbd></td></tr>
+        <tr><td>Ask a project question</td><td><kbd>Ctrl Shift I</kbd></td><td><kbd>Cmd Shift I</kbd></td></tr>
+        <tr><td>Crawl localhost site</td><td><kbd>Ctrl Shift W</kbd></td><td><kbd>Cmd Shift W</kbd></td></tr>
+        <tr><td>Copy output to clipboard</td><td><kbd>Ctrl Shift C</kbd></td><td><kbd>Cmd Shift C</kbd></td></tr>
+        <tr><td>Save output to file</td><td><kbd>Ctrl S</kbd></td><td><kbd>Cmd S</kbd></td></tr>
+        <tr><td>Choose AI model</td><td><kbd>Ctrl M</kbd></td><td><kbd>Cmd M</kbd></td></tr>
+        <tr><td>Quit</td><td><kbd>Ctrl Q</kbd></td><td><kbd>Cmd Q</kbd></td></tr>
       </tbody>
     </table>
   </div>
-  <p>In addition, all standard Windows / macOS shortcuts work as expected: <kbd>Tab</kbd> and <kbd>Shift Tab</kbd> to move between controls, arrow keys to move inside lists and dropdowns, <kbd>Space</kbd> or <kbd>Enter</kbd> to activate a button, <kbd>Alt F4</kbd> (Windows) or <kbd>Cmd Q</kbd> (macOS) to close the window, and <kbd>Esc</kbd> to close any modal dialog.</p>
+  <p>Standard navigation shortcuts also work: <kbd>Tab</kbd> and <kbd>Shift Tab</kbd> to move between controls; arrow keys to move inside lists and dropdowns; <kbd>Space</kbd> or <kbd>Enter</kbd> to activate a button; <kbd>Esc</kbd> to close any modal dialog.</p>
 </section>
 
+<!-- ── Save and copy ──────────────────────────────────────────────────────── -->
 <section class="card" id="saving" aria-labelledby="h-saving">
-  <h2 id="h-saving">Saving and copying</h2>
+  <h2 id="h-saving">Saving and copying output</h2>
   <ul>
     <li><strong>Copy</strong> (<kbd>Ctrl Shift C</kbd>) &mdash; Copies the full analysis text to the clipboard. The status bar confirms "Copied to clipboard" and your screen reader announces it.</li>
-    <li><strong>Save</strong> (<kbd>Ctrl S</kbd>) &mdash; Opens a Save dialog. The default extension is <code>.html</code> for HTML output and <code>.md</code> for Markdown / Prose output. Choose the format from the file-type dropdown in the dialog.</li>
+    <li><strong>Save</strong> (<kbd>Ctrl S</kbd>) &mdash; Opens a Save dialog. The default extension is <code>.html</code> for HTML Table output and <code>.md</code> for Markdown and Prose output. Choose the format from the file-type dropdown in the dialog.</li>
   </ul>
-  <p>Saved HTML files are fully self-contained &mdash; they include the styles for both light and dark mode, and they work in any modern browser. The &lt;table&gt; structure is preserved, so you can navigate them with the same screen reader you used to read them in the app.</p>
+  <p>Saved HTML files are fully self-contained &mdash; they include styles for both light and dark mode and work in any modern browser. The table structure is preserved, so you can navigate them with a screen reader the same way you do inside the app.</p>
+
+  <div class="tip">If you want to share an analysis with a sighted colleague, save it as an HTML file. It renders cleanly in any browser with both light and dark mode support, and the screen-reader-navigable headings and tables are already in place.</div>
 </section>
 
 </main>
 </div>
+
+<button id="back-to-top" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8679; Top</button>
+
+<script>
+(function(){
+  /* ── Back-to-top visibility ────────────────────────────────────────────── */
+  var btn = document.getElementById('back-to-top');
+  window.addEventListener('scroll', function(){
+    btn.classList.toggle('visible', window.scrollY > 300);
+  }, {passive:true});
+
+  /* ── ScrollSpy: mark active nav link with aria-current="location" ──────── */
+  var sections = Array.from(document.querySelectorAll('main section[id]'));
+  var navLinks = Array.from(document.querySelectorAll('nav a[href^="#"]'));
+  if (!sections.length || !navLinks.length) return;
+
+  function markActive(id){
+    navLinks.forEach(function(a){
+      var isCurrent = a.getAttribute('href') === '#' + id;
+      if(isCurrent) a.setAttribute('aria-current','location');
+      else          a.removeAttribute('aria-current');
+    });
+  }
+
+  var visible = new Set();
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting) visible.add(e.target.id);
+      else                 visible.delete(e.target.id);
+    });
+    for(var i=0; i < sections.length; i++){
+      if(visible.has(sections[i].id)){ markActive(sections[i].id); return; }
+    }
+  }, {rootMargin:'-20% 0px -60% 0px', threshold:0});
+
+  sections.forEach(function(s){ observer.observe(s); });
+})();
+</script>
+
 </body>
 </html>

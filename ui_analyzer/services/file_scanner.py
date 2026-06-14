@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from ui_analyzer.models.ui_file import UIFile, UIFileType
+from ui_analyzer.services.attachment_store import looks_like_attachment, lookup_attachment
 
 # Files/directories to always skip
 _SKIP_DIRS  = {".git", ".svn", "node_modules", "__pycache__", ".venv", "venv",
@@ -49,8 +50,19 @@ def scan_folder(
         if ft is None:
             continue
 
+        # Skip sibling attachment files — they belong to a source file, not the list
+        if looks_like_attachment(path.name):
+            continue
+
         rel = str(path.relative_to(folder))
-        files.append(UIFile(path=path, relative_path=rel, file_type=ft))
+        attached = lookup_attachment(rel)
+        files.append(UIFile(
+            path=path,
+            relative_path=rel,
+            file_type=ft,
+            folder_path=folder,
+            attached_image_path=attached,
+        ))
 
     files.sort(key=lambda f: (f.file_type.value, f.relative_path))
     return files
