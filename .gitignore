@@ -56,3 +56,5 @@ tesseract_output/
 .ui_analyzer/
 attachments.json
 config.json
+developer-guide.html.context.png
+ui_file.py.context.png

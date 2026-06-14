@@ -156,6 +156,7 @@ a:focus-visible,button:focus-visible{outline:3px solid #0059b3;outline-offset:2p
     <a href="#drag-drop">Drag &amp; drop</a>
     <a href="#prompt-routing">Prompt routing</a>
     <a href="#accessibility">Accessibility</a>
+    <a href="#localhost">Localhost crawler</a>
     <a href="#shortcuts">Shortcuts</a>
     <a href="#gotchas">Gotchas</a>
     <a href="#build">Run</a>
@@ -687,6 +688,135 @@ def _roll_context(self, file_id: str) -> None:
   <p>The bundled <code>assets/app_icon.png</code> is set on the <code>wx.App</code> via <code>app.SetIcon(...)</code> and on the <code>MainFrame</code> via <code>frame.SetIcon(...)</code> in <code>main.py</code>. On Windows, this shows the icon in the window title bar, the Alt-Tab switcher, and the taskbar. On macOS, the title bar only (the Dock icon is set by the .app bundle's Info.plist, which doesn't exist in <code>python main.py</code> dev runs).</p>
 </section>
 
+<!-- ── Localhost Site Crawler ────────────────────────────────────────────── -->
+<section class="card" id="localhost" aria-labelledby="h-localhost">
+  <h2 id="h-localhost">Localhost Site Crawler</h2>
+  <p>The Localhost Site Crawler is the Python equivalent of the Swift WKWebView crawler in the LyraScan macOS companion app. Where LyraScan uses WKWebView to load each page and calls <code>WKWebView.takeSnapshot()</code> to capture a live rendered screenshot, the wxPython implementation uses <code>httpx</code> to fetch raw HTML over HTTP and saves each page to a temporary directory. Screenshots are not captured automatically during the crawl; users can attach them manually after the fact using the existing <a href="#attachment">screenshot attachment</a> workflow.</p>
+
+  <h3>Key files</h3>
+  <div class="table-wrapper">
+    <table>
+      <caption>Localhost crawler source files</caption>
+      <thead>
+        <tr>
+          <th scope="col">File</th>
+          <th scope="col">Contents</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><code>ui_analyzer/services/localhost_crawler.py</code></td><td><code>CrawlConfig</code> dataclass, <code>LocalhostCrawler</code> class, <code>save_crawl_to_temp()</code> function</td></tr>
+        <tr><td><code>ui_analyzer/views/crawl_dialog.py</code></td><td><code>CrawlDialog</code> modal &mdash; URL entry, settings controls, Start / Cancel buttons</td></tr>
+        <tr><td><code>ui_analyzer/views/main_frame.py</code></td><td><code>_open_crawl_dialog()</code>, <code>_start_crawl()</code>, <code>_on_crawl_complete()</code> handlers</td></tr>
+        <tr><td><code>ui_analyzer/views/settings_dialog.py</code></td><td>New "Crawler" settings tab for default max-pages, max-depth, and pause values</td></tr>
+        <tr><td><code>ui_analyzer/services/config_manager.py</code></td><td><code>get_crawl_config()</code> and <code>set_crawl_config()</code> helpers</td></tr>
+        <tr><td><code>ui_analyzer/services/ollama_client.py</code></td><td><code>_ipv4_fallback(base_url)</code> helper and retry logic in <code>is_available()</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>CrawlConfig data model</h3>
+  <p><code>CrawlConfig</code> is a plain <code>dataclass</code> that holds all user-configurable crawl parameters. It is the sole interface between <code>CrawlDialog</code>, <code>config_manager</code>, and <code>LocalhostCrawler</code>:</p>
+  <pre role="region" aria-label="CrawlConfig dataclass"><code>@dataclass
+class CrawlConfig:
+    max_pages: int = 50       # stop after this many pages
+    max_depth: int = 3        # don't follow links more than 3 levels deep
+    wait_seconds: float = 0.5 # pause between requests (seconds)
+    timeout: float = 10.0     # per-page HTTP timeout (seconds)</code></pre>
+
+  <h3>LocalhostCrawler architecture</h3>
+  <p><code>LocalhostCrawler</code> implements a breadth-first search (BFS) over the pages of a local site. The queue holds <code>(url, depth)</code> tuples. At each step the crawler:</p>
+  <ol>
+    <li>Checks that the URL has not already been visited and that the depth does not exceed <code>config.max_depth</code>.</li>
+    <li>Fetches the page with <code>httpx.get(url, timeout=config.timeout)</code>.</li>
+    <li>Verifies the response <code>Content-Type</code> starts with <code>text/html</code>; non-HTML responses (PDFs, images, JS bundles) are skipped.</li>
+    <li>Parses all <code>&lt;a href&gt;</code> links with Python's <code>html.parser</code> and filters to same-origin links only (<code>http://localhost</code>, <code>http://127.0.0.1</code>, <code>http://0.0.0.0</code>, and <code>https://localhost</code>).</li>
+    <li>Skips URLs whose path ends with a non-HTML extension: <code>.pdf .js .css .png .jpg .jpeg .gif .svg .ico .woff .woff2 .ttf .eot .map .json .xml .zip</code>.</li>
+    <li>Enqueues accepted links at <code>depth + 1</code>.</li>
+    <li>Sleeps <code>config.wait_seconds</code> between fetches.</li>
+    <li>Stops when the visited set reaches <code>config.max_pages</code> or the queue empties.</li>
+  </ol>
+
+  <h3>Crawl pipeline: from fetch to sidebar</h3>
+  <p>The end-to-end pipeline in <code>MainFrame._start_crawl()</code> runs on a background thread:</p>
+  <pre role="region" aria-label="Crawl pipeline in MainFrame"><code>def _start_crawl(self, url: str, config: CrawlConfig) -> None:
+    def do_crawl():
+        try:
+            crawler = LocalhostCrawler(config, on_progress=self._on_crawl_progress)
+            pages = crawler.crawl(url)              # returns list[CrawledPage]
+            temp_dir = save_crawl_to_temp(pages)   # writes HTML to tmp folder
+            new_files = scan_folder(temp_dir)      # reuses existing file scanner
+            wx.CallAfter(self._on_crawl_complete, new_files)
+        except Exception as exc:
+            wx.CallAfter(self._on_crawl_error, str(exc))
+    threading.Thread(target=do_crawl, daemon=True).start()</code></pre>
+  <p>Four stages:</p>
+  <ol>
+    <li><strong>Crawl</strong> &mdash; <code>LocalhostCrawler.crawl(url)</code> returns a <code>list[CrawledPage]</code> where each item holds the original URL and the raw HTML bytes.</li>
+    <li><strong>Save</strong> &mdash; <code>save_crawl_to_temp(pages)</code> writes each page to a system temporary directory, deriving a safe filename from the URL path (e.g. <code>/about</code> becomes <code>about.html</code>). Returns the <code>Path</code> to the temp directory.</li>
+    <li><strong>Scan</strong> &mdash; <code>scan_folder(temp_dir)</code> is the same file scanner used for all other projects. It returns a <code>list[UIFile]</code>.</li>
+    <li><strong>Append</strong> &mdash; <code>_on_crawl_complete</code> appends the new <code>UIFile</code> entries to the existing sidebar list rather than replacing it. The first crawled page is auto-selected.</li>
+  </ol>
+  <p>Live progress is reported via the <code>on_progress</code> callback, which calls <code>wx.CallAfter(self._status.SetStatusText, ...)</code> to update the status bar from the worker thread:</p>
+  <pre role="region" aria-label="Progress callback"><code>def _on_crawl_progress(self, fetched: int, total_found: int, current_url: str) -> None:
+    wx.CallAfter(
+        self._status.SetStatusText,
+        f"Crawling: {fetched}/{total_found} pages — {current_url}"
+    )</code></pre>
+
+  <h3>IPv4 fallback in OllamaClient</h3>
+  <p>On macOS, <code>localhost</code> may resolve to the IPv6 address <code>::1</code> first. Ollama listens only on <code>127.0.0.1</code> (IPv4), so the first connection attempt fails with a connection-refused error. <code>OllamaClient.is_available()</code> now retries automatically:</p>
+  <pre role="region" aria-label="IPv4 fallback in OllamaClient"><code>def _ipv4_fallback(base_url: str) -> str:
+    """Replace 'localhost' with '127.0.0.1' for IPv4-only servers."""
+    return base_url.replace("localhost", "127.0.0.1")
+
+class OllamaClient:
+    async def is_available(self) -> bool:
+        try:
+            await self._get("/api/tags")
+            return True
+        except httpx.ConnectError:
+            # macOS may have resolved localhost -> ::1; retry with IPv4
+            fallback = _ipv4_fallback(self._base_url)
+            if fallback != self._base_url:
+                try:
+                    self._base_url = fallback
+                    await self._get("/api/tags")
+                    return True
+                except Exception:
+                    pass
+        return False</code></pre>
+  <p>Once the fallback address succeeds, it is stored in <code>self._base_url</code> so all subsequent requests use the working address without retrying.</p>
+
+  <h3>CrawlDialog</h3>
+  <p><code>CrawlDialog</code> in <code>ui_analyzer/views/crawl_dialog.py</code> is a modal <code>wx.Dialog</code> with the following controls, each with <code>SetName</code> for screen reader accessibility:</p>
+  <ul>
+    <li>A <code>wx.TextCtrl</code> pre-filled with <code>http://localhost:3000</code> for the starting URL.</li>
+    <li>A <code>wx.SpinCtrl</code> for Max pages (1&ndash;500, default from <code>CrawlConfig</code>).</li>
+    <li>A <code>wx.SpinCtrl</code> for Max depth (1&ndash;10, default from <code>CrawlConfig</code>).</li>
+    <li>A <code>wx.SpinCtrlDouble</code> for Pause between requests in seconds (0.0&ndash;5.0, step 0.1).</li>
+    <li><strong>Start Crawl</strong> and <strong>Cancel</strong> buttons, both 44&nbsp;px tall per WCAG 2.5.5.</li>
+  </ul>
+  <p>The dialog reads default values from <code>config_manager.get_crawl_config()</code> and writes back the user's choices via <code>config_manager.set_crawl_config()</code> when Start Crawl is pressed. This ensures the user's preferred settings persist across sessions.</p>
+
+  <h3>Crawler settings tab</h3>
+  <p>A <strong>Crawler</strong> tab has been added to <code>SettingsDialog</code> in <code>ui_analyzer/views/settings_dialog.py</code>. It exposes the same four <code>CrawlConfig</code> fields as the <code>CrawlDialog</code> but lets users set their preferred defaults without having to adjust them every time they open the crawl dialog.</p>
+
+  <h3>Known limitations</h3>
+  <ul>
+    <li><strong>No JavaScript rendering</strong> &mdash; Pages are fetched with a plain HTTP GET. JavaScript does not execute. React, Vue, and Angular apps that render their content client-side will yield unrendered source HTML.</li>
+    <li><strong>Localhost only</strong> &mdash; The crawler accepts only <code>http://localhost</code>, <code>http://127.0.0.1</code>, <code>http://0.0.0.0</code>, and <code>https://localhost</code>. Off-origin links are silently skipped.</li>
+    <li><strong>No screenshot capture</strong> &mdash; Unlike the LyraScan Swift version which uses <code>WKWebView.takeSnapshot()</code>, no screenshots are taken during the crawl. Users can attach screenshots manually after crawling using the existing attachment workflow.</li>
+    <li><strong>Static temp directory</strong> &mdash; Crawl outputs are written to the system temp directory and are not persisted between app restarts. Re-open a folder or re-crawl to reload them.</li>
+  </ul>
+
+  <h3>Smoke test</h3>
+  <p>A static three-page HTML test site is included at <code>tests/fixtures/sample-site/</code>. To smoke-test the full crawl pipeline:</p>
+  <pre role="region" aria-label="Smoke test steps"><code>cd tests/fixtures/sample-site
+python -m http.server 3000
+# Then in UI Analyzer: File -> Crawl Localhost Site -> http://localhost:3000</code></pre>
+  <p>You should see three pages appear in the sidebar. Select each one and press <kbd>Ctrl R</kbd> to analyze. The status bar should show "Crawling: 1/3 pages", "2/3", "3/3", then "Crawl complete: 3 pages added."</p>
+</section>
+
 <section class="card" id="shortcuts" aria-labelledby="h-shortcuts">
   <h2 id="h-shortcuts">Keyboard shortcuts</h2>
   <p>All shortcuts are defined in <code>MainFrame._build_accelerators</code> as <code>wx.AcceleratorEntry</code> records. They work regardless of which child control has focus, so they are available from inside the follow-up text field, the WebView, and the model picker dialog.</p>
@@ -708,6 +838,7 @@ def _roll_context(self, file_id: str) -> None:
         <tr><td>Analyze / Re-analyze</td><td><kbd>Ctrl R</kbd></td><td><kbd>Cmd R</kbd></td><td>Analysis</td></tr>
         <tr><td>Build Project Context</td><td><kbd>Ctrl Shift A</kbd></td><td><kbd>Cmd Shift A</kbd></td><td>Analysis</td></tr>
         <tr><td>Ask Project Question</td><td><kbd>Ctrl Shift I</kbd></td><td><kbd>Cmd Shift I</kbd></td><td>Analysis</td></tr>
+        <tr><td>Crawl Localhost Site</td><td><kbd>Ctrl Shift W</kbd></td><td><kbd>Cmd Shift W</kbd></td><td>File</td></tr>
         <tr><td>Copy Output</td><td><kbd>Ctrl Shift C</kbd></td><td><kbd>Cmd Shift C</kbd></td><td>Edit</td></tr>
         <tr><td>Save Output</td><td><kbd>Ctrl S</kbd></td><td><kbd>Cmd S</kbd></td><td>Edit</td></tr>
       </tbody>

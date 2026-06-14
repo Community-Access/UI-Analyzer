@@ -135,6 +135,7 @@ a:focus-visible,button:focus-visible{outline:3px solid #0059b3;outline-offset:2p
     <a href="#follow-up">Follow-up questions</a>
     <a href="#project-context">Project context</a>
     <a href="#models">AI models</a>
+    <a href="#crawl">Crawl localhost</a>
     <a href="#shortcuts">Shortcuts</a>
     <a href="#saving">Save &amp; copy</a>
   </div>
@@ -362,6 +363,39 @@ a:focus-visible,button:focus-visible{outline:3px solid #0059b3;outline-offset:2p
   <div class="note">Project Context is built once and reused until you open a different folder or rebuild it. If you add new files to the project, rebuild the context to include them.</div>
 </section>
 
+<!-- ── Localhost Site Crawler ────────────────────────────────────────────── -->
+<section class="card" id="crawl" aria-labelledby="h-crawl">
+  <h2 id="h-crawl">Crawl a localhost site</h2>
+  <p>The Localhost Site Crawler lets you point UI Analyzer at a running local web server &mdash; for example <code>http://localhost:3000</code> &mdash; and automatically fetch every linked page. Each page is saved as an HTML file and added to the sidebar as a file you can select and analyze. This is useful for auditing a local web application, a static site generator output, or a server-side rendered app without having to open and drag individual files.</p>
+
+  <h3>How to crawl a site</h3>
+  <ol>
+    <li>Start your local web server so it is accepting connections (for example: <code>python -m http.server 3000</code>).</li>
+    <li>In UI Analyzer, open <strong>File &rarr; Crawl Localhost Site&hellip;</strong> or press <kbd>Ctrl Shift W</kbd> (Windows) or <kbd>Cmd Shift W</kbd> (macOS).</li>
+    <li>In the dialog that appears, enter the starting URL such as <code>http://localhost:3000</code>.</li>
+    <li>Optionally adjust the settings:
+      <ul>
+        <li><strong>Max pages</strong> &mdash; how many pages to fetch before stopping (default: 50).</li>
+        <li><strong>Max depth</strong> &mdash; how many link-levels deep to follow from the start page (default: 3).</li>
+        <li><strong>Pause between requests</strong> &mdash; a small delay between each page fetch to avoid overloading the server (default: 0.5 seconds).</li>
+      </ul>
+    </li>
+    <li>Click <strong>Start Crawl</strong>. The dialog closes and the crawl begins in the background.</li>
+  </ol>
+
+  <h3>During the crawl</h3>
+  <p>The status bar at the bottom of the window shows live progress, for example: <em>Crawling: 4/12 pages &mdash; http://localhost:3000/about</em>. Your screen reader announces each update automatically.</p>
+  <p>Press <kbd>Escape</kbd> at any time to cancel the crawl. Pages already fetched remain in the sidebar.</p>
+
+  <h3>After the crawl completes</h3>
+  <p>When the crawl finishes, a notification appears and the status bar confirms completion. The crawled pages are appended to the existing sidebar list &mdash; any files you already had open are still there. The first crawled page is selected automatically so you can begin reading or analyzing straight away.</p>
+  <p>Each page appears in the sidebar with the filename derived from its URL path. You can select any page and analyze it with <kbd>Ctrl R</kbd> (Windows) or <kbd>Cmd R</kbd> (macOS) just as you would with any other file.</p>
+
+  <div class="note">The crawler uses static HTTP fetching. It downloads the raw HTML the server sends, exactly as a browser would receive it before JavaScript runs. This means it works well for static HTML sites, server-side rendered apps (such as those built with Django, Rails, or Astro), and documentation sites. React, Vue, or Angular apps that render entirely in the browser will show the unrendered source HTML rather than the finished page content.</div>
+
+  <div class="tip">A static three-page test site is included with the app at <code>tests/fixtures/sample-site/</code>. To try a quick crawl: open a terminal, run <code>python -m http.server 3000</code> from that folder, then use <strong>File &rarr; Crawl Localhost Site&hellip;</strong> and enter <code>http://localhost:3000</code>.</div>
+</section>
+
 <!-- ── AI models ─────────────────────────────────────────────────────────── -->
 <section class="card" id="models" aria-labelledby="h-models">
   <h2 id="h-models">Choosing an AI model</h2>
@@ -403,6 +437,7 @@ a:focus-visible,button:focus-visible{outline:3px solid #0059b3;outline-offset:2p
         <tr><td>Validate against screenshot</td><td><kbd>Ctrl Shift V</kbd></td><td><kbd>Cmd Shift V</kbd></td></tr>
         <tr><td>Build Project Context</td><td><kbd>Ctrl Shift A</kbd></td><td><kbd>Cmd Shift A</kbd></td></tr>
         <tr><td>Ask a project question</td><td><kbd>Ctrl Shift I</kbd></td><td><kbd>Cmd Shift I</kbd></td></tr>
+        <tr><td>Crawl localhost site</td><td><kbd>Ctrl Shift W</kbd></td><td><kbd>Cmd Shift W</kbd></td></tr>
         <tr><td>Copy output to clipboard</td><td><kbd>Ctrl Shift C</kbd></td><td><kbd>Cmd Shift C</kbd></td></tr>
         <tr><td>Save output to file</td><td><kbd>Ctrl S</kbd></td><td><kbd>Cmd S</kbd></td></tr>
         <tr><td>Choose AI model</td><td><kbd>Ctrl M</kbd></td><td><kbd>Cmd M</kbd></td></tr>
